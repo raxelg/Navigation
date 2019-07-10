@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">NavigationWTD</string>
+    <string name="button_text">Routing</string>
+    <string name='direction'>0°</string>
+    <string name='img_description'>compass</string>
+    <string name="view_data">View Data</string>
+    <string name="map_menu">Map</string>
+    <string name="db_menu">Favorites</string>
+    <string name="add_menu">Add location</string>
+    <string name="location_bar_title">Add Location</string>
+    <string name="favorites_bar_title">Favorites</string>
+    <string name="edit_bar_title">Edit Location</string>
+
 </resources>

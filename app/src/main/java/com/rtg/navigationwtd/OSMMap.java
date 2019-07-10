@@ -2,13 +2,16 @@ package com.rtg.navigationwtd;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.app.Service;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -21,43 +24,33 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import org.osmdroid.api.IMapController;
-import org.osmdroid.bonuspack.overlays.GroundOverlay;
 import org.osmdroid.bonuspack.routing.MapQuestRoadManager;
-import org.osmdroid.bonuspack.routing.OSRMRoadManager;
 import org.osmdroid.bonuspack.routing.Road;
 import org.osmdroid.bonuspack.routing.RoadManager;
 import org.osmdroid.bonuspack.routing.RoadNode;
-import org.osmdroid.bonuspack.utils.PolylineEncoder;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.events.MapEventsReceiver;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.LineDrawer;
 import org.osmdroid.views.overlay.MapEventsOverlay;
 import org.osmdroid.views.overlay.Marker;
-import org.osmdroid.views.overlay.Polygon;
 import org.osmdroid.views.overlay.Polyline;
-import org.osmdroid.views.overlay.compass.CompassOverlay;
-import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
-import org.osmdroid.views.overlay.infowindow.BasicInfoWindow;
 import org.osmdroid.views.overlay.infowindow.InfoWindow;
-import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.bluetooth.BluetoothServerSocket;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -65,29 +58,42 @@ import androidx.core.app.ActivityCompat;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.List;
 import java.util.UUID;
 
-public class OSMMap extends AppCompatActivity implements MapEventsReceiver, LocationListener, View.OnClickListener {
-
+public class OSMMap extends AppCompatActivity implements MapEventsReceiver, LocationListener, View.OnClickListener, SensorEventListener {
     private static final int REQUEST_LOCATION = 1;
     LocationManager locationManager;
-    double latitude, longitude;
+    double latitude, longitude, bearing;
 
     ArrayList<Marker> markerpoints = new ArrayList<Marker>();
     ArrayList<GeoPoint> waypoints = new ArrayList<GeoPoint>();
+    ArrayList<GeoPoint> nodes = new ArrayList<GeoPoint>();
     GeoPoint actualposPoint;
+    GeoPoint nearestNode;
     Marker actualposMarker;
 
     MapView map = null;
     MapEventsOverlay mapEventsOverlay;
-    MyLocationNewOverlay mLocationOverlay;
-    CompassOverlay mCompassOverlay;
     RotationGestureOverlay mRotationGestureOverlay;
-    RoadManager roadManager = new OSRMRoadManager(this);
     Road road;
 
-    Button btRouting;
+    Button btRouting, dbBt;
+    ImageButton recenter;
+
+    //compass intitialization
+    ImageView compass_img;
+    TextView txt_compass;
+    int mAzimuth;
+    private SensorManager mSensorManager;
+    private Sensor mRotationV, mAccelerometer, mMagnetometer;
+    boolean haveSensor = false, haveSensor2 = false;
+    float[] rMat = new float[9];
+    float[] orientation = new float[3];
+    private float[] mLastAccelerometer = new float[3];
+    private float[] mLastMagnetometer = new float[3];
+    private boolean mLastAccelerometerSet = false;
+    private boolean mLastMagnetometerSet = false;
+
 
     String IdBufferIn;
     Handler bluetoothIn;
@@ -118,27 +124,26 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
 
         map = (MapView) findViewById(R.id.map);
         map.setTileSource(TileSourceFactory.MAPNIK);
-        mapEventsOverlay = new MapEventsOverlay(this, this);
         map.getOverlays().add(0, mapEventsOverlay);
-        mRotationGestureOverlay = new RotationGestureOverlay(ctx, map);
         mRotationGestureOverlay.setEnabled(true);
         map.setMultiTouchControls(true);
         map.getOverlays().add(this.mRotationGestureOverlay);
-        this.mCompassOverlay = new CompassOverlay(ctx, new InternalCompassOrientationProvider(ctx), map);
-        this.mCompassOverlay.enableCompass();
-        map.getOverlays().add(this.mCompassOverlay);
-
 
         ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
         GPSActivity();
 
-        btRouting = (Button) findViewById(R.id.bTRouting);
+        recenter = findViewById(R.id.recenterButton);
+        recenter.setOnClickListener(this);
+
+        btRouting = findViewById(R.id.bTRouting);
         btRouting.setOnClickListener(this);
+
+        dbBt = findViewById(R.id.db_button);
 
         actualposPoint = new GeoPoint(latitude, longitude);
         actualposMarker = new Marker(map);
         actualposMarker.setPosition(actualposPoint);
-        map.getOverlays().add(1, actualposMarker);
+        map.getOverlays().add(0, actualposMarker);
         actualposMarker.setTitle("Ubicación Actual: "+latitude+", "+longitude);
         actualposMarker.setIcon(getResources().getDrawable(R.drawable.person));
 
@@ -149,6 +154,13 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
         waypoints.add(actualposPoint);
         markerpoints.add(actualposMarker);
 
+        //compass variables
+        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        compass_img = findViewById(R.id.img_compass);
+        txt_compass = findViewById(R.id.txt_azimuth);
+
+        //compass start method
+        start();
 
         bluetoothIn = new Handler() {
             public void handleMessage(android.os.Message msg) {
@@ -168,12 +180,20 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
         };
         btAdapter = BluetoothAdapter.getDefaultAdapter();
         VerificarEstadoBT();
+
+        dbBt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(OSMMap.this, LocationInput.class);
+                finish();
+                startActivity(intent);
+            }
+        });
     }
 
     public void onResume(){
         super.onResume();
         Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
-
         //::::::::: BLUETOOTH
         // Consigue la dirección MAC desde DeviceListActivity via intent
         Intent intent = getIntent();
@@ -202,8 +222,8 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
         }
         MyConexionBT = new ConnectedThread(btSocket);
         MyConexionBT.start();
-
         map.onResume(); //needed for compass, my location overlays, v6.0.0 and up
+        mSensorManager.registerListener(this, mRotationV, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     @Override
@@ -217,7 +237,8 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
             btSocket.close();
         } catch (IOException e2){}
 
-        map.onPause();  //needed for compass, my location overlays, v6.0.0 and up
+        map.onPause(); //needed for compass, my location overlays, v6.0.0 and up
+        stop();
     }
 
     public void GPSActivity() {
@@ -304,8 +325,7 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
         popupMenu.getMenuInflater().inflate(R.menu.popup_menu, popupMenu.getMenu());
 
         popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
+            @Override public boolean onMenuItemClick(MenuItem item) {
                 if("Marcar Destino".equals(item.getTitle()))
                 {
                     if(!waypoints.isEmpty())
@@ -406,7 +426,9 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
                 {
                     Toast.makeText(getApplicationContext(), "Favor de seleccionar un origen o escalas", Toast.LENGTH_LONG).show();
                 }
-
+            case R.id.recenterButton:
+                IMapController mapController = map.getController();
+                mapController.setCenter(actualposPoint);
             default:
                 break;
         }
@@ -421,6 +443,7 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
         Polyline roadOverlay = RoadManager.buildRoadOverlay(road);
         map.getOverlays().add(roadOverlay);
 
+
         for (int i=0; i<road.mNodes.size(); i++){
             RoadNode node = road.mNodes.get(i);
             Marker nodeMarker = new Marker(map);
@@ -430,19 +453,21 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
             nodeMarker.setSnippet(node.mInstructions);
             nodeMarker.setSubDescription(Road.getLengthDurationText(this, node.mLength, node.mDuration));
 
+            GeoPoint g = new GeoPoint(road.mNodes.get(i).mLocation.getLatitude(), road.mNodes.get(i).mLocation.getLongitude());
+            nodes.add(g);
+
             setInstructions(node, nodeMarker);
             map.getOverlays().add(nodeMarker);
         }
-
         GeoPoint node0Gp = new GeoPoint(road.mNodes.get(0).mLocation.getLatitude(), road.mNodes.get(0).mLocation.getLongitude());
         ArrayList<GeoPoint> newGps = new ArrayList<>();
         newGps.add(actualposPoint);
         newGps.add(node0Gp);
-        Polyline stepZero = new Polyline();
-        stepZero.setColor(Color.RED);
-        stepZero.setWidth(4);
-        stepZero.setPoints(newGps);
-        map.getOverlayManager().add(stepZero);
+//        Polyline stepZero = new Polyline();
+//        stepZero.setColor(Color.RED);
+//        stepZero.setWidth(4);
+//        stepZero.setPoints(newGps);
+//        map.getOverlayManager().add(stepZero);
 
         map.invalidate();
     }
@@ -534,70 +559,8 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
 
     public void getBTInstructions(String strInstructions)
     {
-        if("Make a slight left".equals(strInstructions))
-        {
-            sendingWTDInstruction("e");
-        }
-        if("Make a slight right".equals(strInstructions))
-        {
-            sendingWTDInstruction("f");
-        }
-        if("Make a sharp left".equals(strInstructions))
-        {
-            sendingWTDInstruction("g");
-        }
-        if("Make a sharp right".equals(strInstructions))
-        {
-            sendingWTDInstruction("h");
-        }
-        if("Turn left".equals(strInstructions))
-        {
-            sendingWTDInstruction("c");
-        }
-        if("Turn right".equals(strInstructions))
-        {
-            sendingWTDInstruction("d");
-        }
-        if("U turn".equals(strInstructions))
-        {
-            sendingWTDInstruction("i");
-        }
-        if("Go north".equals(strInstructions))
-        {
-            sendingWTDInstruction("a");
-        }
-        if("Go northwest".equals(strInstructions))
-        {
-            sendingWTDInstruction("a");
-        }
-        if("Go northeast".equals(strInstructions))
-        {
-            sendingWTDInstruction("a");
-        }
-        if("Go south".equals(strInstructions))
-        {
-            sendingWTDInstruction("a");
-        }
-        if("Go southeast".equals(strInstructions))
-        {
-            sendingWTDInstruction("a");
-        }
-        if("Go southwest".equals(strInstructions))
-        {
-            sendingWTDInstruction("a");
-        }
-        if("Go west".equals(strInstructions))
-        {
-            sendingWTDInstruction("a");
-        }
-        if("Go east".equals(strInstructions))
-        {
-            sendingWTDInstruction("a");
-        }
-        if("You have arrived at your destination".equals(strInstructions))
-        {
-            sendingWTDInstruction("i");
-        }
+        char instruction = btInstructions.read_instructions(strInstructions);
+        sendingWTDInstruction(String.valueOf(instruction));
     }
 
     @Override
@@ -609,10 +572,14 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
         actualposPoint.setLatitude(location.getLatitude());
         actualposPoint.setLongitude(location.getLongitude());
         actualposMarker.setPosition(actualposPoint);
-        map.getOverlays().set(1, actualposMarker);
+        map.getOverlays().set(0, actualposMarker);
         actualposMarker.setTitle("Ubicación Actual: "+latitude+", "+longitude);
+        if(nodes.size() != 0) {
+            nearestNode = Orientation.nearest_node(actualposPoint, nodes);
+            bearing = actualposPoint.bearingTo(nearestNode);
+            Toast.makeText(getBaseContext(), "The next node is " + bearing, Toast.LENGTH_LONG).show();
+        }
         map.invalidate();
-
         checkingDistance();
     }
 
@@ -620,7 +587,7 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
         if (waypoints.size() >= 2) {
             if (!road.mNodes.isEmpty())
             {
-                for (int i=0; i<road.mNodes.size(); i++) {
+                for (int i=0; i<road.mNodes.size() && road.mNodes != null; i++) {
                     GeoPoint newGp = new GeoPoint(road.mNodes.get(i).mLocation.getLatitude(), road.mNodes.get(i).mLocation.getLongitude());
 
                     //if (actualposPoint.distanceTo(newGp) <= 8) {
@@ -628,8 +595,7 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
                         String[] partstxtInst = road.mNodes.get(i).mInstructions.split(" on");
                         Toast.makeText(getApplicationContext(), partstxtInst[0], Toast.LENGTH_LONG).show();
 
-                        if("You have arrived at your destination".equals(road.mNodes.get(i).mInstructions))
-                        {
+                        if ("You have arrived at your destination".equals(road.mNodes.get(i).mInstructions)) {
                             getBTInstructions(road.mNodes.get(i).mInstructions);
                         } else {
                             getBTInstructions(partstxtInst[0]);
@@ -643,11 +609,49 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
     }
+
     @Override
     public void onProviderEnabled(String provider) {
     }
+
     @Override
     public void onProviderDisabled(String provider) {
+    }
+
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
+            SensorManager.getRotationMatrixFromVector(rMat, event.values);
+            mAzimuth = (int) (Math.toDegrees(SensorManager.getOrientation(rMat, orientation)[0]) + 360) % 360;
+        }
+
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            System.arraycopy(event.values, 0, mLastAccelerometer, 0, event.values.length);
+            mLastAccelerometerSet = true;
+        } else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
+            System.arraycopy(event.values, 0, mLastMagnetometer, 0, event.values.length);
+            mLastMagnetometerSet = true;
+        }
+        if (mLastAccelerometerSet && mLastMagnetometerSet) {
+            SensorManager.getRotationMatrix(rMat, null, mLastAccelerometer, mLastMagnetometer);
+            SensorManager.getOrientation(rMat, orientation);
+            mAzimuth = (int) (Math.toDegrees(SensorManager.getOrientation(rMat, orientation)[0]) + 360) % 360;
+        }
+
+        mAzimuth = Math.round(mAzimuth);
+        compass_img.setRotation(-mAzimuth);
+
+        String where = "NW";
+
+        where = Orientation.which_direction(mAzimuth);
+
+        txt_compass.setText(mAzimuth + "° " + where);
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {
+
     }
 
     //:::::::::: BLUETOOTH
@@ -745,4 +749,45 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
             }
         }
     }
+    private void start() {
+        if (mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) == null) {
+            if ((mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) == null) || (mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD) == null)) {
+                noSensorsAlert();
+            }
+            else {
+                mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+                mMagnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+                haveSensor = mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_UI);
+                haveSensor2 = mSensorManager.registerListener(this, mMagnetometer, SensorManager.SENSOR_DELAY_UI);
+            }
+        }
+        else{
+            mRotationV = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+            haveSensor = mSensorManager.registerListener(this, mRotationV, SensorManager.SENSOR_DELAY_UI);
+    }
 }
+
+    private void noSensorsAlert() {
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+        alertDialog.setMessage("Your device doesn't support the compass.")
+                .setCancelable(false)
+                .setNegativeButton("Close",new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        finish();
+                    }
+                });
+        alertDialog.show();
+    }
+
+    public void stop() {
+        if(haveSensor && haveSensor2){
+            mSensorManager.unregisterListener(this,mAccelerometer);
+            mSensorManager.unregisterListener(this,mMagnetometer);
+        }
+        else{
+            if(haveSensor)
+                mSensorManager.unregisterListener(this,mRotationV);
+        }
+    }
+}
+

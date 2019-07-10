@@ -2,6 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.rtg.navigationwtd">
 
+    <supports-screens
+        android:largeScreens="true"
+        android:normalScreens="true"
+        android:xlargeScreens="true"
+        android:smallScreens="true" />
+
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -14,31 +20,32 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
+        android:name="com.rtg.MyApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
-        <!-- <activity android:name=".OSMMap">
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+
+        <activity android:name=".DispositivosBT"
+            android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".OSMMap$OSMMap" />
-        <activity android:name=".DispositivosBT"></activity> -->
-
-        <activity android:name=".DispositivosBT">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity android:name=".OSMMap" />
-
+        <activity android:name=".LocationInput"
+            android:parentActivityName=".OSMMap"
+            android:configChanges="keyboardHidden|orientation|screenSize"/>
+        <activity android:name=".OSMMap"
+            android:configChanges="keyboardHidden|orientation|screenSize"/>
+        <activity android:name=".Favorites"
+            android:parentActivityName=".LocationInput"
+            android:configChanges="keyboardHidden|orientation|screenSize"/>
+        <activity android:name=".EditData"
+            android:parentActivityName=".LocationInput"
+            android:configChanges="keyboardHidden|orientation|screenSize"/>
     </application>
 
 </manifest>
