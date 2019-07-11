@@ -24,7 +24,7 @@ public class Favorites extends AppCompatActivity {
      * Called when the activity is first created.
      */
     private ArrayList<ExpandListGroup> ExpListItems = new ArrayList<ExpandListGroup>();
-    private android.widget.ExpandableListAdapter ExpAdapter;
+    private ExpandableListAdapter ExpAdapter;
     private ExpandableListView ExpandList;
     private static final String TAG = "Favorites";
     private DatabaseHelper mDatabaseHelper;
@@ -33,7 +33,6 @@ public class Favorites extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.favorites);
-        editBt = findViewById(R.id.edit_fab);
         ExpandList = findViewById(R.id.list_of_favorites);
         mDatabaseHelper = new DatabaseHelper(this);
         updateExpandableListView();
@@ -42,40 +41,45 @@ public class Favorites extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.app_bar);
         setSupportActionBar(toolbar);
 
-        editBt.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(Favorites.this, LocationInput.class);
-                startActivity(intent);
-            }
-        });
+        editBt = findViewById(R.id.edit_fab);
 
         ExpandList.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
             @Override
             public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
-                android.widget.ExpandableListAdapter adapter = parent.getExpandableListAdapter();
-                String label = adapter.getGroup(groupPosition).toString();
-                String address = adapter.getChild(groupPosition,0).toString();
-                String coords = adapter.getChild(groupPosition,1).toString();
+                String label = ExpAdapter.getGroup(groupPosition).getName();
+                String address = ExpAdapter.getChild(groupPosition,0).getName();
+                String coords = ExpAdapter.getChild(groupPosition,1).getName();
 
                 Cursor data = mDatabaseHelper.getItemID(label);
-                int itemID = -1;
+                int groupID = -1;
 
                 while(data.moveToNext()){
-                    itemID = data.getInt(0);
+                    groupID = data.getInt(0);
                 }
-                if(itemID > -1){
+                if(groupID > -1){
                     Intent editScreenIntent = new Intent(Favorites.this, EditData.class);
-                    editScreenIntent.putExtra("id",itemID);
+                    editScreenIntent.putExtra("groupID",groupID);
                     editScreenIntent.putExtra("label",label);
                     editScreenIntent.putExtra("address",address);
                     editScreenIntent.putExtra("coords",coords);
-                    startActivity(editScreenIntent);
+                    editBt.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            startActivity(editScreenIntent);
+                        }
+                    });
                 } else {
                     ToastMessage.message(getApplicationContext(),"No ID associated with name");
                 }
 
-                return true;
+                return false;
+            }
+        });
+
+        editBt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ToastMessage.message(getApplicationContext(),"Please select a location");
             }
         });
     }
@@ -111,13 +115,14 @@ public class Favorites extends AppCompatActivity {
         if (data.getCount() != 0) {
             while (data.moveToNext()) {
                 ArrayList<ExpandListChild> children = new ArrayList<ExpandListChild>();
-                ExpandListGroup g = new ExpandListGroup();
+                ExpandListGroup g = new ExpandListGroup(data.getString(1));
                 ExpandListChild c1 = new ExpandListChild();
                 ExpandListChild c2 = new ExpandListChild();
 
-                g.setName(data.getString(1));
                 c1.setName(data.getString(2));
+                c1.setTag(data.getString(1));
                 c2.setName(data.getString(3));
+                c1.setTag(data.getString(1));
                 children.add(c1);
                 children.add(c2);
                 g.setItems(children);

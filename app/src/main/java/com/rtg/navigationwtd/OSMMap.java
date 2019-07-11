@@ -124,7 +124,9 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
 
         map = (MapView) findViewById(R.id.map);
         map.setTileSource(TileSourceFactory.MAPNIK);
+        mapEventsOverlay = new MapEventsOverlay(this, this);
         map.getOverlays().add(0, mapEventsOverlay);
+        mRotationGestureOverlay = new RotationGestureOverlay(ctx, map);
         mRotationGestureOverlay.setEnabled(true);
         map.setMultiTouchControls(true);
         map.getOverlays().add(this.mRotationGestureOverlay);
@@ -143,7 +145,7 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
         actualposPoint = new GeoPoint(latitude, longitude);
         actualposMarker = new Marker(map);
         actualposMarker.setPosition(actualposPoint);
-        map.getOverlays().add(0, actualposMarker);
+        map.getOverlays().add(1, actualposMarker);
         actualposMarker.setTitle("Ubicación Actual: "+latitude+", "+longitude);
         actualposMarker.setIcon(getResources().getDrawable(R.drawable.person));
 

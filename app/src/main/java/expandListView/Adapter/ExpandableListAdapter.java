@@ -30,7 +30,7 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
         ch.add(item);
         groups.get(index).setItems(ch);
     }
-    public Object getChild(int groupPosition, int childPosition) {
+    public ExpandListChild getChild(int groupPosition, int childPosition) {
         // TODO Auto-generated method stub
         ArrayList<ExpandListChild> chList = groups.get(groupPosition).getItems();
         return chList.get(childPosition);
@@ -63,7 +63,7 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
 
     }
 
-    public Object getGroup(int groupPosition) {
+    public ExpandListGroup getGroup(int groupPosition) {
         // TODO Auto-generated method stub
         return groups.get(groupPosition);
     }

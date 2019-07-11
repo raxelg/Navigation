@@ -107,4 +107,17 @@ public class DatabaseHelper extends SQLiteOpenHelper{
         Log.d(TAG, "updateCoords: Setting name to " + newCoords);
         db.execSQL(query);
     }
+
+    public void deleteLocation(int id, String label, String address, String coords){
+        SQLiteDatabase db = this.getWritableDatabase();
+        String query = "DELETE FROM " + TABLE_NAME + " WHERE "
+                + KEY_ID + " = '" + id + "'" +
+                " AND " + LABEL + " = '" + label + "'" +
+                " AND " + ADDRESS + " = '" + address + "'" +
+                " AND " + COORDINATES + " = '" + coords + "'";
+        Log.d(TAG, "deleteLocation: query: " + query);
+        Log.d(TAG, "deleteLocation: Deleting " + label + ", " + address + ", " + coords + " from database.");
+        db.execSQL(query);
+    }
+
 }

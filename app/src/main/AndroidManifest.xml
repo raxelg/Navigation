@@ -28,7 +28,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
-        <activity android:name=".DispositivosBT"
+        <activity android:name=".Favorites"
             android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -40,7 +40,7 @@
             android:configChanges="keyboardHidden|orientation|screenSize"/>
         <activity android:name=".OSMMap"
             android:configChanges="keyboardHidden|orientation|screenSize"/>
-        <activity android:name=".Favorites"
+        <activity android:name=".DispositivosBT"
             android:parentActivityName=".LocationInput"
             android:configChanges="keyboardHidden|orientation|screenSize"/>
         <activity android:name=".EditData"
