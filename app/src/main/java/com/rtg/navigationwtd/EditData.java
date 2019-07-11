@@ -29,9 +29,7 @@ public class EditData extends AppCompatActivity {
     Geocoder geocoder = new Geocoder(MyApp.getContext(), Locale.getDefault());
     List<Address> addresses = new ArrayList();
     String coords;
-    private String selectedLabel;
-    private String selectedAddress;
-    private String selectedCoords;
+    private String selectedLabel, selectedAddress, selectedCoords;
     private int groupID;
 
     @Override
@@ -57,7 +55,7 @@ public class EditData extends AppCompatActivity {
                 if (!hasFocus) {
                     String address = address_input.getText().toString();
                     coords = GeoCoder.getLocationFromAddress(address);
-                    coords_input.setText("("+coords+")");
+                    coords_input.setText(coords);
                 }
             }
         });

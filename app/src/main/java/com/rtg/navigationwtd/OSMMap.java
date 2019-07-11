@@ -61,9 +61,12 @@ import java.io.OutputStream;
 import java.util.UUID;
 
 public class OSMMap extends AppCompatActivity implements MapEventsReceiver, LocationListener, View.OnClickListener, SensorEventListener {
+
     private static final int REQUEST_LOCATION = 1;
     LocationManager locationManager;
     double latitude, longitude, bearing;
+    private String selectedCoords;
+    private double selectedLat, selectedLong;
 
     ArrayList<Marker> markerpoints = new ArrayList<Marker>();
     ArrayList<GeoPoint> waypoints = new ArrayList<GeoPoint>();
@@ -163,6 +166,25 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
 
         //compass start method
         start();
+
+        //receiving coords from Favorites acitivity
+        Intent receivedIntent = getIntent();
+        selectedCoords = receivedIntent.getStringExtra("coords");
+        String[] parsedCoords = selectedCoords.split(",");
+        selectedLat = Double.parseDouble(parsedCoords[0]);
+        selectedLong = Double.parseDouble(parsedCoords[1]);
+        GeoPoint selectedPoint = new GeoPoint(selectedLat,selectedLong);
+
+        //add destination marker from the received coords
+        Marker selectedMarker = new Marker(map);
+        selectedMarker.setPosition(selectedPoint);
+        map.getOverlays().add(selectedMarker);
+        selectedMarker.setTitle("END POINT");
+        selectedMarker.setIcon(getResources().getDrawable(R.drawable.marker_destination));
+        markerpoints.add(selectedMarker);
+        waypoints.add(selectedPoint);
+        map.invalidate();
+
 
         bluetoothIn = new Handler() {
             public void handleMessage(android.os.Message msg) {

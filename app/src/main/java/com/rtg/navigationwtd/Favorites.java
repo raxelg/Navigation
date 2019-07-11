@@ -28,7 +28,7 @@ public class Favorites extends AppCompatActivity {
     private ExpandableListView ExpandList;
     private static final String TAG = "Favorites";
     private DatabaseHelper mDatabaseHelper;
-    FloatingActionButton editBt;
+    FloatingActionButton editBt,destinationBt;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,36 +42,55 @@ public class Favorites extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         editBt = findViewById(R.id.edit_fab);
+        destinationBt = findViewById(R.id.destination_button);
 
         ExpandList.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
             @Override
             public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
-                String label = ExpAdapter.getGroup(groupPosition).getName();
-                String address = ExpAdapter.getChild(groupPosition,0).getName();
-                String coords = ExpAdapter.getChild(groupPosition,1).getName();
+                if (!parent.isGroupExpanded(groupPosition)) {
+                    String label = ExpAdapter.getGroup(groupPosition).getName();
+                    String address = ExpAdapter.getChild(groupPosition, 0).getName();
+                    String coords = ExpAdapter.getChild(groupPosition, 1).getName();
 
-                Cursor data = mDatabaseHelper.getItemID(label);
-                int groupID = -1;
+                    //listens for destination button to set the location for the map
+                    destinationBt.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            Intent mapIntent = new Intent(Favorites.this, OSMMap.class);
+                            mapIntent.putExtra("coords", coords);
+                            startActivity(mapIntent);
+                        }
+                    });
 
-                while(data.moveToNext()){
-                    groupID = data.getInt(0);
-                }
-                if(groupID > -1){
-                    Intent editScreenIntent = new Intent(Favorites.this, EditData.class);
-                    editScreenIntent.putExtra("groupID",groupID);
-                    editScreenIntent.putExtra("label",label);
-                    editScreenIntent.putExtra("address",address);
-                    editScreenIntent.putExtra("coords",coords);
+                    Cursor data = mDatabaseHelper.getItemID(label);
+                    int groupID = -1;
+
+                    while (data.moveToNext()) {
+                        groupID = data.getInt(0);
+                    }
+                    if (groupID > -1) {
+                        Intent editScreenIntent = new Intent(Favorites.this, EditData.class);
+                        editScreenIntent.putExtra("groupID", groupID);
+                        editScreenIntent.putExtra("label", label);
+                        editScreenIntent.putExtra("address", address);
+                        editScreenIntent.putExtra("coords", coords);
+                        editBt.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                startActivity(editScreenIntent);
+                            }
+                        });
+                    } else {
+                        ToastMessage.message(getApplicationContext(), "No ID associated with name");
+                    }
+                } else {
                     editBt.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            startActivity(editScreenIntent);
+                            ToastMessage.message(getApplicationContext(),"Please select a location");
                         }
                     });
-                } else {
-                    ToastMessage.message(getApplicationContext(),"No ID associated with name");
                 }
-
                 return false;
             }
         });

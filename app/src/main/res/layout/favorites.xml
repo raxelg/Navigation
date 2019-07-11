@@ -35,5 +35,21 @@
         app:fabSize="normal"
         app:srcCompat="@drawable/edit_icon" />
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/destination_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/list_of_favorites"
+        android:layout_alignBottom="@+id/list_of_favorites"
+        android:layout_gravity="start|bottom"
+        android:layout_marginStart="24dp"
+        android:layout_marginBottom="29dp"
+        android:backgroundTint="@color/colorAccent"
+        android:clickable="true"
+        android:foregroundGravity="center"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:srcCompat="@drawable/destination_icon" />
+
 
 </RelativeLayout>

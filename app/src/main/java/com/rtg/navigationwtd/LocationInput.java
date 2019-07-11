@@ -58,7 +58,7 @@ public class LocationInput extends AppCompatActivity {
                 if (!hasFocus) {
                     String address = address_input.getText().toString();
                     coords = GeoCoder.getLocationFromAddress(address);
-                    coords_input.setText("("+coords+")");
+                    coords_input.setText(coords);
                 }
             }
         });
