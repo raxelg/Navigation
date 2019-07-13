@@ -179,6 +179,7 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
             destinationPt = new Marker(map);
             destinationPt.setPosition(selectedPoint);
             map.getOverlays().add(destinationPt);
+            destinationPt.setTitle("Final Destination");
             infoWindow = new MyInfoWindow(R.layout.destination_popup,map);
             destinationPt.setInfoWindow(infoWindow);
             destinationPt.setIcon(getResources().getDrawable(R.drawable.destination_marker));
@@ -351,13 +352,14 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
                 if ("Marcar Destino".equals(item.getTitle())) {
                     if (!waypoints.isEmpty()) {
                         int mpsize = markerpoints.size() - 1;
-                        if ("END POINT".equals(markerpoints.get(mpsize).getTitle())) {
+                        if ("Final Destination".equals(markerpoints.get(mpsize).getTitle())) {
                             Toast.makeText(getApplicationContext(), "Ya has seleccionado un destino", Toast.LENGTH_LONG).show();
                             ;
                         } else {
                             destinationPt = new Marker(map);
                             destinationPt.setPosition(p);
                             map.getOverlays().add(destinationPt);
+                            destinationPt.setTitle("Final Destination");
                             infoWindow = new MyInfoWindow(R.layout.destination_popup,map);
                             destinationPt.setInfoWindow(infoWindow);
                             destinationPt.setIcon(getResources().getDrawable(R.drawable.destination_marker));
@@ -386,6 +388,7 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
                             m.setIcon(getResources().getDrawable(R.drawable.marker_via));
 
                             markerpoints.add(destinationPt);
+                            destinationPt.setTitle("Final Destination");
                             infoWindow = new MyInfoWindow(R.layout.destination_popup,map);
                             markerpoints.get(mpsize + 1).setInfoWindow(infoWindow);
                             markerpoints.get(mpsize + 1).setIcon(getResources().getDrawable(R.drawable.destination_marker));
@@ -562,12 +565,16 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
             Toast.makeText(getBaseContext(), "The next node is " + bearing, Toast.LENGTH_LONG).show();
         }
         map.invalidate();
-        checkingDistance();
+
+        if(!nodes.isEmpty()){
+            checkingDistance();
+
+        }
     }
 
     public void checkingDistance() {
         if (waypoints.size() >= 2) {
-            if (road.mNodes != null && !road.mNodes.isEmpty()) {
+            if(road.mNodes != null && !road.mNodes.isEmpty()){
                 for (int i = 0; i < road.mNodes.size(); i++) {
                     GeoPoint newGp = new GeoPoint(road.mNodes.get(i).mLocation.getLatitude(), road.mNodes.get(i).mLocation.getLongitude());
 
