@@ -30,4 +30,25 @@ public class GeoCoder {
             return null;
         }
     }
+
+    public static String getAddressFromCoords(double lat, double lon) {
+
+        Context mContext = MyApp.getContext();
+        Geocoder coder = new Geocoder(mContext);
+        List<Address> address;
+
+        try {
+            address = coder.getFromLocation(lat,lon,1);
+            if (address == null) {
+                return null;
+            }
+            String addressLine = address.get(0).getAddressLine(0);
+            return addressLine;
+
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+
 }

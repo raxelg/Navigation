@@ -115,7 +115,7 @@ public class Favorites extends AppCompatActivity {
         switch(item.getItemId())
         {
             case R.id.map:
-                Intent map_intent = new Intent(Favorites.this, DispositivosBT.class);
+                Intent map_intent = new Intent(Favorites.this, OSMMap.class);
                 startActivity(map_intent);
                 break;
             case R.id.add:

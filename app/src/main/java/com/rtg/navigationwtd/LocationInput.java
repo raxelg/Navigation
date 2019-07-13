@@ -29,7 +29,7 @@ public class LocationInput extends AppCompatActivity {
     FloatingActionButton add_location, view_data;
     TextView label_title;
     EditText label_input, address_input, coords_input;
-    String coords;
+    String coords, selectedCoords, selectedAddress;
 
     Geocoder geocoder = new Geocoder(MyApp.getContext(), Locale.getDefault());
     List<Address> addresses = new ArrayList();
@@ -47,6 +47,16 @@ public class LocationInput extends AppCompatActivity {
         mDatabaseHelper = new DatabaseHelper(this);
         Toolbar toolbar = findViewById(R.id.app_bar);
         setSupportActionBar(toolbar);
+
+
+        Intent receivedIntent = getIntent();
+        selectedAddress = receivedIntent.getStringExtra("address");
+        selectedCoords = receivedIntent.getStringExtra("coords");
+
+        if(selectedAddress != null && selectedCoords != null){
+            address_input.setText(selectedAddress);
+            coords_input.setText(selectedCoords);
+        }
 
         //generates coords via GeoCoder after address has been entered and user exits EditText field
         address_input.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -104,7 +114,7 @@ public class LocationInput extends AppCompatActivity {
         switch(item.getItemId())
         {
             case R.id.map:
-                Intent map_intent = new Intent(LocationInput.this, DispositivosBT.class);
+                Intent map_intent = new Intent(LocationInput.this, OSMMap.class);
                 startActivity(map_intent);
                 break;
             case R.id.favorites:
