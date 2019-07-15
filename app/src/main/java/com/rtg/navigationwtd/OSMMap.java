@@ -55,6 +55,8 @@ import android.bluetooth.BluetoothSocket;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -81,7 +83,8 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
     RotationGestureOverlay mRotationGestureOverlay;
     Road road;
 
-    Button btRouting, dbBt;
+    Button btRouting;
+    FloatingActionButton addBt;
     ImageButton recenter;
 
     //compass intitialization
@@ -139,7 +142,7 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
         btRouting = findViewById(R.id.bTRouting);
         btRouting.setOnClickListener(this);
 
-        dbBt = findViewById(R.id.db_button);
+        addBt = findViewById(R.id.db_button);
 
 
         actualposPoint = new GeoPoint(latitude, longitude);
@@ -209,7 +212,7 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
         mBtAdapter = BluetoothAdapter.getDefaultAdapter();
         VerificarEstadoBT();
 
-        dbBt.setOnClickListener(new View.OnClickListener() {
+        addBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(OSMMap.this, LocationInput.class);
@@ -374,7 +377,7 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
                 if ("Agregar Escala".equals(item.getTitle())) {
                     if (!waypoints.isEmpty()) {
                         int mpsize = markerpoints.size() - 1;
-                        if ("END POINT".equals(markerpoints.get(mpsize).getTitle())) {
+                        if ("Final Destination".equals(markerpoints.get(mpsize).getTitle())) {
                             destinationPt = markerpoints.get(mpsize);
 
                             double lat = waypoints.get(mpsize).getLatitude();
@@ -405,7 +408,7 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
                             map.getOverlays().add(m);
                             m.setTitle("VIA POINT");
                             m.setIcon(getResources().getDrawable(R.drawable.marker_via));
-                            markerpoints.add(m);
+                            markerpoints.set(markerpoints.size()-2,m);
                             waypoints.add(p);
 
                             map.invalidate();
@@ -426,7 +429,7 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.bTRouting:
-                if (waypoints.size() >= 2 && nodes.isEmpty()) {
+                if (waypoints.size() >= 2 && markerpoints.get(markerpoints.size()-1).getTitle() == "Final Destination") {
                     map.getOverlays().clear();
                     map.getOverlays().addAll(markerpoints);
                     waypoints.set(0, actualposPoint);
@@ -475,7 +478,7 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
     }
 
     public void setInstructions(RoadNode node, Marker nMarker) {
-        String[] partstxtInst = node.mInstructions.split(" on");
+        String[] partstxtInst = node.mInstructions.split(" onto");
         if ("Make a slight left".equals(partstxtInst[0])) {
             Drawable icon = getResources().getDrawable(R.drawable.ic_slight_left);
             nMarker.setImage(icon);

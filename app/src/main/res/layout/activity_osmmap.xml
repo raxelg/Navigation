@@ -12,7 +12,7 @@ android:layout_height="match_parent"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <Button
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/db_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -20,7 +20,10 @@ android:layout_height="match_parent"
             android:layout_marginTop="8dp"
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="16dp"
-            android:text="DATA"
+            android:tint="@color/colorPrimary"
+            android:scaleType="center"
+            android:backgroundTint="@color/colorAccent"
+            app:srcCompat="@drawable/add_location_icon"
             app:layout_constraintBottom_toBottomOf="@+id/map"
             app:layout_constraintEnd_toStartOf="@+id/recenterButton"
             app:layout_constraintHorizontal_bias="0.03"
@@ -84,14 +87,13 @@ android:layout_height="match_parent"
             android:layout_height="97dp"
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="312dp"
             android:background="@null"
             app:layout_constraintBottom_toBottomOf="@+id/map"
             app:layout_constraintEnd_toEndOf="@+id/map"
             app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="@+id/map"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.168"
+            app:layout_constraintTop_toTopOf="@+id/map"
+            app:layout_constraintVertical_bias="0.0"
             app:srcCompat="@drawable/osm_ic_center_map" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 

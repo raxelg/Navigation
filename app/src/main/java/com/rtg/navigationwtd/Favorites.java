@@ -90,6 +90,13 @@ public class Favorites extends AppCompatActivity {
                             ToastMessage.message(getApplicationContext(),"Please select a location");
                         }
                     });
+
+                    destinationBt.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            ToastMessage.message(getApplicationContext(),"Please select a location");
+                        }
+                    });
                 }
                 return false;
             }
