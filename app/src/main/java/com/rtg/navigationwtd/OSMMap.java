@@ -2,10 +2,14 @@ package com.rtg.navigationwtd;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -29,7 +33,13 @@ import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.routing.GraphHopperRoadManager;
 import org.osmdroid.bonuspack.routing.Road;
@@ -46,29 +56,22 @@ import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
 import org.osmdroid.views.overlay.infowindow.InfoWindow;
 
-import java.util.ArrayList;
-
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
-
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.UUID;
 
-public class OSMMap extends AppCompatActivity implements MapEventsReceiver, LocationListener, View.OnClickListener, SensorEventListener {
+public class OSMMap extends AppCompatActivity implements MapEventsReceiver, LocationListener, View.OnClickListener, SensorEventListener, LocationsMenuFragment.OnDataPass {
 
     private static final int REQUEST_LOCATION = 1;
     LocationManager locationManager;
     double latitude, longitude, bearing;
-    private String selectedCoords;
+    private String selectedCoords, dataInPrint, test;
     private double selectedLat, selectedLong, destinationLat, destinationLong;
+    private ArrayList<String> instructions = new ArrayList<String>();
+    private String instruction;
+    private String btMessage;
 
     ArrayList<Marker> markerpoints = new ArrayList<Marker>();
     ArrayList<GeoPoint> waypoints = new ArrayList<GeoPoint>();
@@ -82,14 +85,14 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
     MapEventsOverlay mapEventsOverlay;
     RotationGestureOverlay mRotationGestureOverlay;
     Road road;
+    boolean emptyRoad;
 
     Button btRouting;
-    FloatingActionButton addBt;
-    ImageButton recenter;
+    FloatingActionButton dbBt, recenter;
 
     //compass intitialization
     ImageView compass_img;
-    TextView txt_compass;
+//    TextView txt_compass;
     int mAzimuth;
     private SensorManager mSensorManager;
     private Sensor mRotationV, mAccelerometer, mMagnetometer;
@@ -101,8 +104,12 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
     private boolean mLastAccelerometerSet = false;
     private boolean mLastMagnetometerSet = false;
 
+    FragmentManager fragmentManager;
+    DatabaseHelper mDatabaseHelper;
+
     private BluetoothAdapter mBtAdapter;
-    private String address = "20:16:08:22:50:32";
+    private String address = "00:18:E4:40:00:06"; //PCB
+//    private String address = "20:16:08:22:50:32"; //PCB
     String IdBufferIn;
     Handler bluetoothIn;
     final int handlerState = 0;
@@ -112,116 +119,141 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
     private static final UUID BTMODULEUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Context ctx = getApplicationContext();
         //important! set your user agent to prevent getting banned from the osm servers
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
-        setContentView(R.layout.activity_osmmap);
-        //Configuration.getInstance().setUserAgentValue(BuildConfig.APPLICATION_ID);
+        setContentView(R.layout.osm_map);
+        Configuration.getInstance().setUserAgentValue(BuildConfig.APPLICATION_ID);
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        map = findViewById(R.id.map);
-        map.setTilesScaledToDpi(true);
-        map.setTileSource(TileSourceFactory.MAPNIK);
-        mapEventsOverlay = new MapEventsOverlay(this);
-        map.getOverlays().add(0, mapEventsOverlay);
-        mRotationGestureOverlay = new RotationGestureOverlay(map);
-        mRotationGestureOverlay.setEnabled(true);
-        map.setMultiTouchControls(true);
-        map.getOverlays().add(this.mRotationGestureOverlay);
+            fragmentManager = getSupportFragmentManager();
+            mDatabaseHelper = new DatabaseHelper(this);
+            addFragment();
 
-        ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
-        GPSActivity();
+            map = findViewById(R.id.map);
+            map.setTilesScaledToDpi(true);
+            map.setTileSource(TileSourceFactory.MAPNIK);
+            mapEventsOverlay = new MapEventsOverlay(this);
+            map.getOverlays().add(0, mapEventsOverlay);
+            mRotationGestureOverlay = new RotationGestureOverlay(map);
+            mRotationGestureOverlay.setEnabled(true);
+            map.setMultiTouchControls(true);
+            map.getOverlays().add(this.mRotationGestureOverlay);
 
-        recenter = findViewById(R.id.recenterButton);
-        recenter.setOnClickListener(this);
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
+            GPSActivity();
 
-        btRouting = findViewById(R.id.bTRouting);
-        btRouting.setOnClickListener(this);
+            recenter = findViewById(R.id.recenterButton);
+            recenter.setOnClickListener(this);
 
-        addBt = findViewById(R.id.db_button);
+            btRouting = findViewById(R.id.bTRouting);
+            btRouting.setOnClickListener(this);
+            dbBt = findViewById(R.id.db_button);
 
+            actualposPoint = new GeoPoint(latitude, longitude);
+            actualposMarker = new Marker(map);
+            actualposMarker.setPosition(actualposPoint);
+            map.getOverlays().add(1, actualposMarker);
+            actualposMarker.setTitle("Ubicación Actual: " + latitude + ", " + longitude);
+            actualposMarker.setIcon(getResources().getDrawable(R.drawable.person));
 
-        actualposPoint = new GeoPoint(latitude, longitude);
-        actualposMarker = new Marker(map);
-        actualposMarker.setPosition(actualposPoint);
-        map.getOverlays().add(1, actualposMarker);
-        actualposMarker.setTitle("Ubicación Actual: " + latitude + ", " + longitude);
-        actualposMarker.setIcon(getResources().getDrawable(R.drawable.person));
-
-        IMapController mapController = map.getController();
-        mapController.setZoom(18.0);
-        mapController.setCenter(actualposPoint);
-        actualposMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-        waypoints.add(actualposPoint);
-        markerpoints.add(actualposMarker);
-        map.invalidate();
-
-        //compass variables
-        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        compass_img = findViewById(R.id.img_compass);
-        txt_compass = findViewById(R.id.txt_azimuth);
-
-        //compass start method
-        start();
-
-        //receiving coords from Favorites acitivity
-        Intent receivedIntent = getIntent();
-        selectedCoords = receivedIntent.getStringExtra("coords");
-
-        if (selectedCoords != null) {
-            String[] parsedCoords = selectedCoords.split(",");
-            selectedLat = Double.parseDouble(parsedCoords[0]);
-            selectedLong = Double.parseDouble(parsedCoords[1]);
-            GeoPoint selectedPoint = new GeoPoint(selectedLat, selectedLong);
-
-            //add destination marker from the received coords
-            destinationPt = new Marker(map);
-            destinationPt.setPosition(selectedPoint);
-            map.getOverlays().add(destinationPt);
-            destinationPt.setTitle("Final Destination");
-            infoWindow = new MyInfoWindow(R.layout.destination_popup,map);
-            destinationPt.setInfoWindow(infoWindow);
-            destinationPt.setIcon(getResources().getDrawable(R.drawable.destination_marker));
-            markerpoints.add(destinationPt);
-            waypoints.add(selectedPoint);
+            IMapController mapController = map.getController();
+            mapController.setZoom(18.0);
+            mapController.setCenter(actualposPoint);
+            actualposMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+            if(savedInstanceState == null) {
+                waypoints.add(actualposPoint);
+            }
+            markerpoints.add(actualposMarker);
             map.invalidate();
-        }
+
+//            if (savedInstanceState != null && selectedCoords == null) {
+//                destinationLoc = savedInstanceState.getParcelable("destination");
+//                waypoints = savedInstanceState.getParcelableArrayList("waypoints");
+//                nodes = savedInstanceState.getParcelableArrayList("nodes");
+//                emptyRoad = savedInstanceState.getBoolean("emptyRoad");
+//
+//                destinationPt = new Marker(map);
+//                destinationPt.setPosition(destinationLoc);
+//                map.getOverlays().add(destinationPt);
+//                destinationPt.setTitle("Final Destination");
+//                infoWindow = new MyInfoWindow(R.layout.destination_popup, map);
+//                destinationPt.setInfoWindow(infoWindow);
+//                destinationPt.setIcon(getResources().getDrawable(R.drawable.destination_marker));
+//                markerpoints.add(destinationPt);
+//
+//                if(!emptyRoad){
+//                    Routing();
+//                    map.invalidate();
+//                    }
+//                }
+
+            //compass variables
+            mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+            compass_img = findViewById(R.id.img_compass);
+//            txt_compass = findViewById(R.id.txt_azimuth);
+
+            //compass start method
+            start();
+
+            //receiving coords from Favorites acitivity
+            Intent receivedIntent = getIntent();
+            selectedCoords = receivedIntent.getStringExtra("coords");
+
+            if (selectedCoords != null) {
+                String[] parsedCoords = selectedCoords.split(",");
+                selectedLat = Double.parseDouble(parsedCoords[0]);
+                selectedLong = Double.parseDouble(parsedCoords[1]);
+                GeoPoint selectedPoint = new GeoPoint(selectedLat, selectedLong);
+
+                //add destination marker from the received coords
+                destinationPt = new Marker(map);
+                destinationPt.setPosition(selectedPoint);
+                map.getOverlays().add(destinationPt);
+                destinationPt.setTitle("Final Destination");
+                infoWindow = new MyInfoWindow(R.layout.destination_popup, map);
+                destinationPt.setInfoWindow(infoWindow);
+                destinationPt.setIcon(getResources().getDrawable(R.drawable.destination_marker));
+                markerpoints.add(destinationPt);
+                waypoints.add(selectedPoint);
+                map.invalidate();
+            }
 
 
-        bluetoothIn = new Handler() {
-            public void handleMessage(android.os.Message msg) {
-                if (msg.what == handlerState) {
-                    String readMessage = (String) msg.obj;
-                    DataStringIN.append(readMessage);
+            bluetoothIn = new Handler() {
+                public void handleMessage(android.os.Message msg) {
+                    if (msg.what == handlerState) {
+                        String readMessage = (String) msg.obj;
+                        DataStringIN.append(readMessage);
 
-                    int endOfLineIndex = DataStringIN.indexOf("#");
+                        int endOfLineIndex = DataStringIN.indexOf("#");
 
-                    if (endOfLineIndex > 0) {
-                        String dataInPrint = DataStringIN.substring(0, endOfLineIndex);
-                        //IdBufferIn.setText("Dato: " + dataInPrint);
-                        DataStringIN.delete(0, DataStringIN.length());
+                        if (endOfLineIndex > 0) {
+                            dataInPrint = DataStringIN.substring(0, endOfLineIndex);
+                            //IdBufferIn.setText("Dato: " + dataInPrint);
+                            Toast.makeText(getBaseContext(), "InputStream: " + dataInPrint, Toast.LENGTH_SHORT).show();
+                            DataStringIN.delete(0, DataStringIN.length());
+                        }
                     }
                 }
-            }
-        };
+            };
 
-        mBtAdapter = BluetoothAdapter.getDefaultAdapter();
-        VerificarEstadoBT();
+            mBtAdapter = BluetoothAdapter.getDefaultAdapter();
+            VerificarEstadoBT();
 
-        addBt.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(OSMMap.this, LocationInput.class);
-                finish();
-                startActivity(intent);
-            }
-        });
+            dbBt.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(OSMMap.this, Favorites.class);
+                    startActivity(intent);
+                }
+            });
+        }
 
-    }
 
     public void onResume() {
         super.onResume();
@@ -354,10 +386,9 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
             public boolean onMenuItemClick(MenuItem item) {
                 if ("Marcar Destino".equals(item.getTitle())) {
                     if (!waypoints.isEmpty()) {
-                        int mpsize = markerpoints.size() - 1;
+                        int mpsize = markerpoints.size()-1;
                         if ("Final Destination".equals(markerpoints.get(mpsize).getTitle())) {
                             Toast.makeText(getApplicationContext(), "Ya has seleccionado un destino", Toast.LENGTH_LONG).show();
-                            ;
                         } else {
                             destinationPt = new Marker(map);
                             destinationPt.setPosition(p);
@@ -369,6 +400,7 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
                             markerpoints.add(destinationPt);
                             waypoints.add(p);
                             map.invalidate();
+                            closeOptionsMenu();
                         }
                     } else {
                         Toast.makeText(getApplicationContext(), "Debes primero marcar un origen", Toast.LENGTH_LONG).show();
@@ -434,10 +466,11 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
                     map.getOverlays().addAll(markerpoints);
                     waypoints.set(0, actualposPoint);
                     Routing();
-                    map.getOverlays().add(0, mapEventsOverlay);
-                } else {
+                    map.getOverlays().add(0, mapEventsOverlay); }
+                else {
                     Toast.makeText(getApplicationContext(), "Favor de seleccionar un origen o escalas", Toast.LENGTH_LONG).show();
                 }
+
             case R.id.recenterButton:
                 IMapController mapController = map.getController();
                 mapController.setCenter(actualposPoint);
@@ -448,8 +481,11 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
 
     public void Routing() {
         RoadManager roadManager = new GraphHopperRoadManager("f02cfe4a-2b47-4de4-9cd2-d2d73738da3c", false);
+//        RoadManager roadManager = new MapQuestRoadManager("PoVKuwnEeAujuzAHzqkRG9sIaG2iWA7E");
         roadManager.addRequestOption("unit=k");
-        roadManager.addRequestOption("routeType=pedestrian");
+//        roadManager.addRequestOption("routeType=pedestrian");
+        roadManager.addRequestOption("vehicle=foot");
+        roadManager.addRequestOption("optimize=true");
         road = roadManager.getRoad(waypoints);
 
         if (road.mStatus != Road.STATUS_OK) {
@@ -479,19 +515,19 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
 
     public void setInstructions(RoadNode node, Marker nMarker) {
         String[] partstxtInst = node.mInstructions.split(" onto");
-        if ("Make a slight left".equals(partstxtInst[0])) {
+        if ("Turn slight left".equals(partstxtInst[0])) {
             Drawable icon = getResources().getDrawable(R.drawable.ic_slight_left);
             nMarker.setImage(icon);
         }
-        if ("Make a slight right".equals(partstxtInst[0])) {
+        if ("Turn slight right".equals(partstxtInst[0])) {
             Drawable icon = getResources().getDrawable(R.drawable.ic_slight_right);
             nMarker.setImage(icon);
         }
-        if ("Make a sharp left".equals(partstxtInst[0])) {
+        if ("Turn sharp left".equals(partstxtInst[0])) {
             Drawable icon = getResources().getDrawable(R.drawable.ic_sharp_left);
             nMarker.setImage(icon);
         }
-        if ("Make a sharp right".equals(partstxtInst[0])) {
+        if ("Turn sharp right".equals(partstxtInst[0])) {
             Drawable icon = getResources().getDrawable(R.drawable.ic_sharp_right);
             nMarker.setImage(icon);
         }
@@ -503,51 +539,22 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
             Drawable icon = getResources().getDrawable(R.drawable.ic_turn_right);
             nMarker.setImage(icon);
         }
-        if ("U turn".equals(partstxtInst[0])) {
+        if ("Make a U-turn".equals(partstxtInst[0])) {
             Drawable icon = getResources().getDrawable(R.drawable.ic_u_turn);
             nMarker.setImage(icon);
         }
-        if ("Go north".equals(partstxtInst[0])) {
+        if ("Continue".equals(partstxtInst[0])) {
             Drawable icon = getResources().getDrawable(R.drawable.ic_continue);
             nMarker.setImage(icon);
         }
-        if ("Go northwest".equals(partstxtInst[0])) {
-            Drawable icon = getResources().getDrawable(R.drawable.ic_continue);
-            nMarker.setImage(icon);
-        }
-        if ("Go northeast".equals(partstxtInst[0])) {
-            Drawable icon = getResources().getDrawable(R.drawable.ic_continue);
-            nMarker.setImage(icon);
-        }
-        if ("Go south".equals(partstxtInst[0])) {
-            Drawable icon = getResources().getDrawable(R.drawable.ic_continue);
-            nMarker.setImage(icon);
-        }
-        if ("Go southeast".equals(partstxtInst[0])) {
-            Drawable icon = getResources().getDrawable(R.drawable.ic_continue);
-            nMarker.setImage(icon);
-        }
-        if ("Go southwest".equals(partstxtInst[0])) {
-            Drawable icon = getResources().getDrawable(R.drawable.ic_continue);
-            nMarker.setImage(icon);
-        }
-        if ("Go west".equals(partstxtInst[0])) {
-            Drawable icon = getResources().getDrawable(R.drawable.ic_continue);
-            nMarker.setImage(icon);
-        }
-        if ("Go east".equals(partstxtInst[0])) {
-            Drawable icon = getResources().getDrawable(R.drawable.ic_continue);
-            nMarker.setImage(icon);
-        }
-        if ("You have arrived at your destination".equals(node.mInstructions)) {
+        if ("Arrive at destination".equals(node.mInstructions)) {
             Drawable icon = getResources().getDrawable(R.drawable.ic_arrived);
             nMarker.setImage(icon);
         }
     }
 
-    public void getBTInstructions(String strInstructions) {
-        char instruction = btInstructions.read_instructions(strInstructions);
-        sendingWTDInstruction(String.valueOf(instruction));
+    public void getBTInstructions(String instruction) {
+        sendingWTDInstruction(instruction);
     }
 
     @Override
@@ -559,15 +566,20 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
         actualposPoint.setLatitude(location.getLatitude());
         actualposPoint.setLongitude(location.getLongitude());
         actualposMarker.setPosition(actualposPoint);
-        map.getOverlays().set(1, actualposMarker);
+        map.getOverlays().add(actualposMarker);
         actualposMarker.setTitle("Ubicación Actual: " + latitude + ", " + longitude);
+        map.invalidate();
+
+//        MyConexionBT.read();
+//        if(btInfo != null){
+//            ToastMessage.message(getApplicationContext(),"BT read: " + btInfo);
+//        }
 
         if (nodes.size() != 0) {
             nearestNode = Orientation.nearest_node(actualposPoint, nodes);
             bearing = actualposPoint.bearingTo(nearestNode);
-            Toast.makeText(getBaseContext(), "The next node is " + bearing, Toast.LENGTH_LONG).show();
+//            Toast.makeText(getBaseContext(), "The next node is " + bearing, Toast.LENGTH_LONG).show();
         }
-        map.invalidate();
 
         if(!nodes.isEmpty()){
             checkingDistance();
@@ -580,18 +592,30 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
             if(road.mNodes != null && !road.mNodes.isEmpty()){
                 for (int i = 0; i < road.mNodes.size(); i++) {
                     GeoPoint newGp = new GeoPoint(road.mNodes.get(i).mLocation.getLatitude(), road.mNodes.get(i).mLocation.getLongitude());
-
                     //if (actualposPoint.distanceTo(newGp) <= 8) {
-                    if (actualposPoint.distanceToAsDouble(newGp) <= 15) {
-                        String[] partstxtInst = road.mNodes.get(i).mInstructions.split(" on");
+                    if (actualposPoint.distanceToAsDouble(newGp) <= 15){
+                        String[] partstxtInst = road.mNodes.get(i).mInstructions.split(" onto");
                         Toast.makeText(getApplicationContext(), partstxtInst[0], Toast.LENGTH_LONG).show();
 
-                        if ("You have arrived at your destination".equals(road.mNodes.get(i).mInstructions)) {
+                        instruction = partstxtInst[0];
+                        btMessage = btInstructions.read_instructions(partstxtInst[0]);
+                        instructions.add(btMessage);
+                        instructions.add(instruction);
+
+                        if ("Arrive at destination".equals(road.mNodes.get(i).mInstructions)) {
                             getBTInstructions(road.mNodes.get(i).mInstructions);
                         } else {
-                            getBTInstructions(partstxtInst[0]);
+                            if(btMessage != instructions.get(0) || instruction != instructions.get(1)) {
+                                getBTInstructions(btMessage);
+                                instructions.clear();
+                            } else {
+                                break;
+                            }
+
                         }
+
                     }
+                    break;
                 }
             }
         }
@@ -637,7 +661,7 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
 
         where = Orientation.which_direction(mAzimuth);
 
-        txt_compass.setText(mAzimuth + "° " + where);
+//        txt_compass.setText(mAzimuth + "° " + where);
     }
 
     @Override
@@ -699,7 +723,7 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
         }
 
         public void run() {
-            byte[] buffer = new byte[256];
+            byte[] buffer = new byte[1024];
             int bytes;
 
             // Se mantiene en modo escucha para determinar el ingreso de datos
@@ -722,9 +746,20 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
             } catch (IOException e) {
                 // Si no es posible enviar datos se cierra la conexión
                 Toast.makeText(getBaseContext(), "La conexión falló", Toast.LENGTH_LONG).show();
-                //finish();
+                finish();
             }
         }
+
+//        public void read(String input) {
+//            try {
+//                mmInStream.read(input.getBytes());
+//                btInfo = mmInStream.toString();
+//            } catch (IOException e) {
+//                // Si no es posible enviar datos se cierra la conexión
+//                Toast.makeText(getBaseContext(), "La conexión falló", Toast.LENGTH_LONG).show();
+//                //finish();
+//            }
+//        }
     }
 
     private void start() {
@@ -765,6 +800,47 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
         }
     }
 
+//    @Override
+//    protected void onSaveInstanceState(Bundle outState) {
+//        super.onSaveInstanceState(outState);
+//        Log.i("OSMMap", "onSaveInstanceState");
+//        if(destinationPt != null) {
+//            destinationLoc = destinationPt.getPosition();
+//            outState.putParcelable("destination",destinationLoc);
+//        }
+//        emptyRoad = road.mNodes.isEmpty();
+//        outState.putParcelableArrayList("waypoints",waypoints);
+//        outState.putParcelableArrayList("nodes",nodes);
+//        outState.putBoolean("route",emptyRoad);
+//    }
+
+//    @Override
+//    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+//        super.onRestoreInstanceState(savedInstanceState);
+//        Log.i("OSMMap", "onRestoreInstanceState");
+//        if (savedInstanceState != null && selectedCoords == null) {
+//            destinationLoc = savedInstanceState.getParcelable("destination");
+//            waypoints = savedInstanceState.getParcelableArrayList("waypoints");
+//            nodes = savedInstanceState.getParcelableArrayList("nodes");
+//            emptyRoad = savedInstanceState.getBoolean("emptyRoad");
+//
+//            destinationPt = new Marker(map);
+//            destinationPt.setPosition(destinationLoc);
+//            map.getOverlays().add(destinationPt);
+//            destinationPt.setTitle("Final Destination");
+//            infoWindow = new MyInfoWindow(R.layout.destination_popup, map);
+//            destinationPt.setInfoWindow(infoWindow);
+//            destinationPt.setIcon(getResources().getDrawable(R.drawable.destination_marker));
+//            markerpoints.add(destinationPt);
+//
+//            if(!emptyRoad){
+//                Routing();
+//                map.invalidate();
+//            }
+//        }
+//    }
+
+
     private class MyInfoWindow extends InfoWindow{
         public MyInfoWindow(int layoutResId, MapView mapView) {
             super(layoutResId, mapView);
@@ -791,8 +867,52 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
                     startActivity(addMarker);
                 }
             });
+        }
+    }
 
+    @Override
+    public void onDataPass(String data) {
+        if(data != null) {
+            int mpsize = markerpoints.size() - 1;
+            if ("Final Destination".equals(markerpoints.get(mpsize).getTitle())) {
+                Toast.makeText(getApplicationContext(), "Ya has seleccionado un destino", Toast.LENGTH_LONG).show();
+            } else {
+                String[] parsedCoords = data.split(",");
+                selectedLat = Double.parseDouble(parsedCoords[0]);
+                selectedLong = Double.parseDouble(parsedCoords[1]);
+                GeoPoint selectedPoint = new GeoPoint(selectedLat, selectedLong);
 
+                destinationPt = new Marker(map);
+                destinationPt.setPosition(selectedPoint);
+                map.getOverlays().add(destinationPt);
+                destinationPt.setTitle("Final Destination");
+                infoWindow = new MyInfoWindow(R.layout.destination_popup, map);
+                destinationPt.setInfoWindow(infoWindow);
+                destinationPt.setIcon(getResources().getDrawable(R.drawable.destination_marker));
+                markerpoints.add(destinationPt);
+                waypoints.add(selectedPoint);
+                map.invalidate();
+
+                Fragment fragment = fragmentManager.findFragmentById(R.id.locations_fragment);
+                if (fragment != null){
+                    FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                    fragmentTransaction.remove(fragment);
+                    fragmentTransaction.commit();
+                }
+            }
+        }
+    }
+
+    private void addFragment(){
+        Cursor data = mDatabaseHelper.getData();
+        if(data.getCount() != 0){
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            LocationsMenuFragment fragment = new LocationsMenuFragment();
+            fragmentTransaction.add(R.id.locations_fragment, fragment);
+            fragmentTransaction.commit();
+        } else {
+            ToastMessage.message(getApplicationContext(),"No data");
         }
     }
 }

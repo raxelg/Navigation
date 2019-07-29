@@ -70,10 +70,10 @@ public class DatabaseHelper extends SQLiteOpenHelper{
         return data;
     }
 
-    public Cursor getItemID(String name){
+    public Cursor getItemID(String label){
         SQLiteDatabase db = this.getWritableDatabase();
         String query = "SELECT " + KEY_ID + " FROM " + TABLE_NAME +
-                " WHERE " + LABEL + " = '" + name + "'";
+                " WHERE " + LABEL + " = '" + label + "'";
         Cursor data = db.rawQuery(query, null);
         return data;
     }
@@ -119,5 +119,7 @@ public class DatabaseHelper extends SQLiteOpenHelper{
         Log.d(TAG, "deleteLocation: Deleting " + label + ", " + address + ", " + coords + " from database.");
         db.execSQL(query);
     }
+
+//    public String getCoordsFromLabel()
 
 }

@@ -32,7 +32,6 @@ public class GeoCoder {
     }
 
     public static String getAddressFromCoords(double lat, double lon) {
-
         Context mContext = MyApp.getContext();
         Geocoder coder = new Geocoder(mContext);
         List<Address> address;

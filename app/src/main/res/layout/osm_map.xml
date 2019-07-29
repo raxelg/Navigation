@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/map_activity"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.rtg.navigationwtd.OSMMap">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+        <org.osmdroid.views.MapView
+            android:id="@+id/map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_constraintBottom_toTopOf="@id/locations_fragment"
+            app:layout_constraintEnd_toEndOf="@id/map"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.815"></org.osmdroid.views.MapView>
+
+        <!--<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"-->
+            <!--android:id="@+id/scrollView"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="200dp"-->
+            <!--android:fillViewport="true"-->
+            <!--android:background="@color/colorPrimary"-->
+            <!--app:layout_constraintBottom_toBottomOf="parent"-->
+            <!--app:layout_constraintEnd_toEndOf="parent"-->
+            <!--app:layout_constraintStart_toStartOf="parent">-->
+
+            <FrameLayout
+                android:id="@+id/locations_fragment"
+                class="com.rtg.navigationwtd.LocationsMenuFragment"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                tools:layout="@android:layout/simple_list_item_2"></FrameLayout>
+
+        <!--</ScrollView>-->
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/db_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="28dp"
+            android:backgroundTint="@color/colorAccent"
+            android:scaleType="center"
+            android:tint="@color/colorPrimary"
+            android:tooltipText="Favorites"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/recenterButton"
+            app:srcCompat="@drawable/data_icon" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/recenterButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="28dp"
+            android:backgroundTint="@color/colorAccent"
+            android:tooltipText="Recenter"
+            app:layout_constraintEnd_toEndOf="@+id/map"
+            app:layout_constraintTop_toBottomOf="@+id/img_compass"
+            app:srcCompat="@drawable/recenter_icon" />
+
+        <ImageView
+            android:id="@+id/img_compass"
+            android:layout_width="79dp"
+            android:layout_height="80dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
+            android:contentDescription="@string/img_description"
+            android:scaleType="fitXY"
+            app:layout_constraintEnd_toEndOf="@+id/map"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/compass" />
+
+        <Button
+            android:id="@+id/bTRouting"
+            android:layout_width="231dp"
+            android:layout_height="77dp"
+            android:text="@string/button_text"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!--<TextView-->
+        <!--android:id="@+id/txt_azimuth"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_marginStart="8dp"-->
+        <!--android:layout_marginEnd="8dp"-->
+        <!--android:text="@string/direction"-->
+        <!--android:textColor="#000"-->
+        <!--android:textSize="40sp"-->
+        <!--android:textStyle="bold"-->
+        <!--app:layout_constraintBottom_toTopOf="@+id/map"-->
+        <!--app:layout_constraintEnd_toEndOf="parent"-->
+        <!--app:layout_constraintHorizontal_bias="0.4"-->
+        <!--app:layout_constraintStart_toEndOf="@+id/bTRouting" />-->
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</RelativeLayout>

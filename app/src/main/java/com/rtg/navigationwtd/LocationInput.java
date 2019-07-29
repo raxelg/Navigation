@@ -37,7 +37,7 @@ public class LocationInput extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Context ctx = getApplicationContext();
-        setContentView(R.layout.add_new_location);
+        setContentView(R.layout.add_location);
 
         add_location = findViewById(R.id.add_button);
         view_data = findViewById(R.id.data_button);
@@ -48,12 +48,11 @@ public class LocationInput extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.app_bar);
         setSupportActionBar(toolbar);
 
-
         Intent receivedIntent = getIntent();
         selectedAddress = receivedIntent.getStringExtra("address");
         selectedCoords = receivedIntent.getStringExtra("coords");
 
-        if(selectedAddress != null && selectedCoords != null){
+        if(selectedAddress != null || selectedCoords != null){
             address_input.setText(selectedAddress);
             coords_input.setText(selectedCoords);
         }
@@ -68,7 +67,30 @@ public class LocationInput extends AppCompatActivity {
                 if (!hasFocus) {
                     String address = address_input.getText().toString();
                     coords = GeoCoder.getLocationFromAddress(address);
-                    coords_input.setText(coords);
+
+                    if(coords != null){
+                        coords_input.setText(coords);
+                    }
+                }
+            }
+        });
+
+        coords_input.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                /* When focus is lost check that the text field
+                 * has valid values.
+                 */
+                if (!hasFocus) {
+                    String coords = coords_input.getText().toString();
+                    String[] parsedCoords = coords.split(",");
+                    double lat = Double.parseDouble(parsedCoords[0]);
+                    double lon = Double.parseDouble(parsedCoords[1]);
+                    String address = GeoCoder.getAddressFromCoords(lat,lon);
+
+                    if(address != null) {
+                        address_input.setText(address);
+                    }
                 }
             }
         });

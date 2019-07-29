@@ -74,12 +74,14 @@ public class Favorites extends AppCompatActivity {
                         editScreenIntent.putExtra("label", label);
                         editScreenIntent.putExtra("address", address);
                         editScreenIntent.putExtra("coords", coords);
+
                         editBt.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
                                 startActivity(editScreenIntent);
                             }
                         });
+
                     } else {
                         ToastMessage.message(getApplicationContext(), "No ID associated with name");
                     }

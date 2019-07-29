@@ -23,6 +23,7 @@
         android:backgroundTint="@color/colorAccent"
         android:clickable="true"
         android:foregroundGravity="center"
+        android:tooltipText="Add location to database"
         app:srcCompat="@drawable/add_location_icon" />
 
 </LinearLayout>
