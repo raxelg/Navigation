@@ -69,9 +69,11 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
     double latitude, longitude, bearing;
     private String selectedCoords, dataInPrint, test;
     private double selectedLat, selectedLong, destinationLat, destinationLong;
-    private ArrayList<String> instructions = new ArrayList<String>();
+//    private ArrayList<String> instructions = new ArrayList<String>();
     private String instruction;
     private String btMessage;
+    private String prevInstruction;
+    private String prevBtMessage;
 
     ArrayList<Marker> markerpoints = new ArrayList<Marker>();
     ArrayList<GeoPoint> waypoints = new ArrayList<GeoPoint>();
@@ -553,9 +555,9 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
         }
     }
 
-    public void getBTInstructions(String instruction) {
-        sendingWTDInstruction(instruction);
-    }
+//    public void getBTInstructions(String instruction) {
+//        sendingWTDInstruction(instruction);
+//    }
 
     @Override
     public void onLocationChanged(Location location) {
@@ -595,27 +597,19 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
                     //if (actualposPoint.distanceTo(newGp) <= 8) {
                     if (actualposPoint.distanceToAsDouble(newGp) <= 15){
                         String[] partstxtInst = road.mNodes.get(i).mInstructions.split(" onto");
-                        Toast.makeText(getApplicationContext(), partstxtInst[0], Toast.LENGTH_LONG).show();
-
                         instruction = partstxtInst[0];
                         btMessage = btInstructions.read_instructions(partstxtInst[0]);
-                        instructions.add(btMessage);
-                        instructions.add(instruction);
 
-                        if ("Arrive at destination".equals(road.mNodes.get(i).mInstructions)) {
-                            getBTInstructions(road.mNodes.get(i).mInstructions);
-                        } else {
-                            if(btMessage != instructions.get(0) || instruction != instructions.get(1)) {
-                                getBTInstructions(btMessage);
-                                instructions.clear();
-                            } else {
-                                break;
-                            }
-
+//                        if ("Arrive at destination".equals(road.mNodes.get(i).mInstructions)) {
+//                            sendingWTDInstruction(btMessage);
+                        if(btMessage != prevBtMessage || instruction != prevInstruction) {
+                            Toast.makeText(getApplicationContext(), btMessage, Toast.LENGTH_SHORT).show();
+                            prevBtMessage = btInstructions.read_instructions(partstxtInst[0]);
+                            prevInstruction = partstxtInst[0];
+                            MyConexionBT.write(btMessage);
+                            break;
                         }
-
                     }
-                    break;
                 }
             }
         }
