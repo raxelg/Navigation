@@ -134,7 +134,6 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
 
             fragmentManager = getSupportFragmentManager();
             mDatabaseHelper = new DatabaseHelper(this);
-            addFragment();
 
             map = findViewById(R.id.map);
             map.setTilesScaledToDpi(true);
@@ -223,6 +222,8 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
                 markerpoints.add(destinationPt);
                 waypoints.add(selectedPoint);
                 map.invalidate();
+            } else {
+                addFragment();
             }
 
 
@@ -401,6 +402,7 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
                             destinationPt.setIcon(getResources().getDrawable(R.drawable.destination_marker));
                             markerpoints.add(destinationPt);
                             waypoints.add(p);
+                            removeFramgent();
                             map.invalidate();
                             closeOptionsMenu();
                         }
@@ -597,15 +599,13 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
                     //if (actualposPoint.distanceTo(newGp) <= 8) {
                     if (actualposPoint.distanceToAsDouble(newGp) <= 15){
                         String[] partstxtInst = road.mNodes.get(i).mInstructions.split(" onto");
-                        instruction = partstxtInst[0];
-                        btMessage = btInstructions.read_instructions(partstxtInst[0]);
 
-//                        if ("Arrive at destination".equals(road.mNodes.get(i).mInstructions)) {
-//                            sendingWTDInstruction(btMessage);
-                        if(btMessage != prevBtMessage || instruction != prevInstruction) {
+                        if(btMessage == btInstructions.read_instructions(partstxtInst[0]) && instruction == partstxtInst[0]) {
+                            break;
+                        } else {
+                            btMessage = btInstructions.read_instructions(partstxtInst[0]);
+                            instruction = partstxtInst[0];
                             Toast.makeText(getApplicationContext(), btMessage, Toast.LENGTH_SHORT).show();
-                            prevBtMessage = btInstructions.read_instructions(partstxtInst[0]);
-                            prevInstruction = partstxtInst[0];
                             MyConexionBT.write(btMessage);
                             break;
                         }
@@ -739,8 +739,8 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
                 mmOutStream.write(input.getBytes());
             } catch (IOException e) {
                 // Si no es posible enviar datos se cierra la conexión
-                Toast.makeText(getBaseContext(), "La conexión falló", Toast.LENGTH_LONG).show();
-                finish();
+//                Toast.makeText(getBaseContext(), "La conexión falló", Toast.LENGTH_LONG).show();
+//                finish();
             }
         }
 
@@ -886,13 +886,7 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
                 markerpoints.add(destinationPt);
                 waypoints.add(selectedPoint);
                 map.invalidate();
-
-                Fragment fragment = fragmentManager.findFragmentById(R.id.locations_fragment);
-                if (fragment != null){
-                    FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                    fragmentTransaction.remove(fragment);
-                    fragmentTransaction.commit();
-                }
+                removeFramgent();
             }
         }
     }
@@ -907,6 +901,15 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
             fragmentTransaction.commit();
         } else {
             ToastMessage.message(getApplicationContext(),"No data");
+        }
+    }
+
+    private void removeFramgent() {
+        Fragment fragment = fragmentManager.findFragmentById(R.id.locations_fragment);
+        if (fragment != null) {
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.remove(fragment);
+            fragmentTransaction.commit();
         }
     }
 }

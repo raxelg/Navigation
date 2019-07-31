@@ -76,12 +76,12 @@ public class EditData extends AppCompatActivity {
                 String newAddress = address_input.getText().toString();
                 String newCoords = coords_input.getText().toString();
                 if (newLabel.length() != 0 && newLabel != selectedLabel) {
-                    mDatabaseHelper.updateLabel(newLabel,groupID,selectedLabel);
+                    mDatabaseHelper.updateRow(groupID,"Label",newLabel);
                     if (newAddress.length() != 0 && newAddress != selectedAddress){
-                        mDatabaseHelper.updateAddress(newAddress,groupID,selectedAddress);
+                        mDatabaseHelper.updateRow(groupID,"Address",newAddress);
                     }
                     if (newCoords.length() != 0 && newCoords != selectedCoords){
-                        mDatabaseHelper.updateCoords(newCoords,groupID,selectedCoords);
+                        mDatabaseHelper.updateRow(groupID,"Coords",newCoords);
                     }
                     Intent back = new Intent(EditData.this,Favorites.class);
                     startActivity(back);
@@ -95,7 +95,7 @@ public class EditData extends AppCompatActivity {
         deleteBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mDatabaseHelper.deleteLocation(groupID,selectedLabel,selectedAddress,selectedCoords);
+                mDatabaseHelper.deleteLocation(groupID);
                 Intent back = new Intent(EditData.this,Favorites.class);
                 startActivity(back);
             }
