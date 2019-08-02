@@ -70,10 +70,7 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
     private String selectedCoords, dataInPrint, test;
     private double selectedLat, selectedLong, destinationLat, destinationLong;
 //    private ArrayList<String> instructions = new ArrayList<String>();
-    private String instruction;
-    private String btMessage;
-    private String prevInstruction;
-    private String prevBtMessage;
+    private String instruction, btMessage, userOrientation, bearingDirection, returnDirection;
 
     ArrayList<Marker> markerpoints = new ArrayList<Marker>();
     ArrayList<GeoPoint> waypoints = new ArrayList<GeoPoint>();
@@ -90,7 +87,7 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
     boolean emptyRoad;
 
     Button btRouting;
-    FloatingActionButton dbBt, recenter;
+    FloatingActionButton dbBt, recenter, cancelBt;
 
     //compass intitialization
     ImageView compass_img;
@@ -153,6 +150,9 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
 
             btRouting = findViewById(R.id.bTRouting);
             btRouting.setOnClickListener(this);
+
+            cancelBt = findViewById(R.id.cancel_button);
+
             dbBt = findViewById(R.id.db_button);
 
             actualposPoint = new GeoPoint(latitude, longitude);
@@ -171,27 +171,6 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
             }
             markerpoints.add(actualposMarker);
             map.invalidate();
-
-//            if (savedInstanceState != null && selectedCoords == null) {
-//                destinationLoc = savedInstanceState.getParcelable("destination");
-//                waypoints = savedInstanceState.getParcelableArrayList("waypoints");
-//                nodes = savedInstanceState.getParcelableArrayList("nodes");
-//                emptyRoad = savedInstanceState.getBoolean("emptyRoad");
-//
-//                destinationPt = new Marker(map);
-//                destinationPt.setPosition(destinationLoc);
-//                map.getOverlays().add(destinationPt);
-//                destinationPt.setTitle("Final Destination");
-//                infoWindow = new MyInfoWindow(R.layout.destination_popup, map);
-//                destinationPt.setInfoWindow(infoWindow);
-//                destinationPt.setIcon(getResources().getDrawable(R.drawable.destination_marker));
-//                markerpoints.add(destinationPt);
-//
-//                if(!emptyRoad){
-//                    Routing();
-//                    map.invalidate();
-//                    }
-//                }
 
             //compass variables
             mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
@@ -255,7 +234,25 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
                     startActivity(intent);
                 }
             });
+
+            cancelBt.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    map.getOverlays().clear();
+                    map.getOverlays().add(0, mapEventsOverlay);
+                    map.getOverlays().add(1, actualposMarker);
+                    markerpoints.clear();
+                    markerpoints.add(actualposMarker);
+                    waypoints.clear();
+                    waypoints.add(actualposPoint);
+                    nodes.clear();
+                    map.invalidate();
+                    cancelBt.hide();
+                    addFragment();
+                }
+            });
         }
+
 
 
     public void onResume() {
@@ -381,84 +378,29 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
 
     @Override
     public boolean longPressHelper(final GeoPoint p) {
-        PopupMenu popupMenu = new PopupMenu(OSMMap.this, btRouting);
-        popupMenu.getMenuInflater().inflate(R.menu.popup_menu, popupMenu.getMenu());
-
-        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                if ("Marcar Destino".equals(item.getTitle())) {
-                    if (!waypoints.isEmpty()) {
-                        int mpsize = markerpoints.size()-1;
-                        if ("Final Destination".equals(markerpoints.get(mpsize).getTitle())) {
-                            Toast.makeText(getApplicationContext(), "Ya has seleccionado un destino", Toast.LENGTH_LONG).show();
-                        } else {
-                            destinationPt = new Marker(map);
-                            destinationPt.setPosition(p);
-                            map.getOverlays().add(destinationPt);
-                            destinationPt.setTitle("Final Destination");
-                            infoWindow = new MyInfoWindow(R.layout.destination_popup,map);
-                            destinationPt.setInfoWindow(infoWindow);
-                            destinationPt.setIcon(getResources().getDrawable(R.drawable.destination_marker));
-                            markerpoints.add(destinationPt);
-                            waypoints.add(p);
-                            removeFramgent();
-                            map.invalidate();
-                            closeOptionsMenu();
-                        }
-                    } else {
-                        Toast.makeText(getApplicationContext(), "Debes primero marcar un origen", Toast.LENGTH_LONG).show();
-                    }
-                }
-                if ("Agregar Escala".equals(item.getTitle())) {
-                    if (!waypoints.isEmpty()) {
-                        int mpsize = markerpoints.size() - 1;
-                        if ("Final Destination".equals(markerpoints.get(mpsize).getTitle())) {
-                            destinationPt = markerpoints.get(mpsize);
-
-                            double lat = waypoints.get(mpsize).getLatitude();
-                            double lng = waypoints.get(mpsize).getLongitude();
-                            GeoPoint bp = new GeoPoint(lat, lng);
-
-                            Marker m = new Marker(map);
-                            m.setPosition(p);
-                            map.getOverlays().add(m);
-                            m.setTitle("VIA POINT");
-                            m.setIcon(getResources().getDrawable(R.drawable.marker_via));
-
-                            markerpoints.add(destinationPt);
-                            destinationPt.setTitle("Final Destination");
-                            infoWindow = new MyInfoWindow(R.layout.destination_popup,map);
-                            markerpoints.get(mpsize + 1).setInfoWindow(infoWindow);
-                            markerpoints.get(mpsize + 1).setIcon(getResources().getDrawable(R.drawable.destination_marker));
-
-                            markerpoints.set(mpsize, m);
-
-                            waypoints.add(bp);
-                            waypoints.set(mpsize, p);
-
-                            map.invalidate();
-                        } else {
-                            Marker m = new Marker(map);
-                            m.setPosition(p);
-                            map.getOverlays().add(m);
-                            m.setTitle("VIA POINT");
-                            m.setIcon(getResources().getDrawable(R.drawable.marker_via));
-                            markerpoints.set(markerpoints.size()-2,m);
-                            waypoints.add(p);
-
-                            map.invalidate();
-                        }
-                    } else {
-                        Toast.makeText(getApplicationContext(), "Debes primero marcar un origen", Toast.LENGTH_LONG).show();
-                    }
-                }
-                return false;
+        if (!waypoints.isEmpty()) {
+            int mpsize = markerpoints.size()-1;
+            if ("Final Destination".equals(markerpoints.get(mpsize).getTitle())) {
+                Toast.makeText(getApplicationContext(), "Ya has seleccionado un destino", Toast.LENGTH_SHORT).show();
+            } else {
+                destinationPt = new Marker(map);
+                destinationPt.setPosition(p);
+                map.getOverlays().add(destinationPt);
+                destinationPt.setTitle("Final Destination");
+                infoWindow = new MyInfoWindow(R.layout.destination_popup,map);
+                destinationPt.setInfoWindow(infoWindow);
+                destinationPt.setIcon(getResources().getDrawable(R.drawable.destination_marker));
+                markerpoints.add(destinationPt);
+                waypoints.add(p);
+                removeFramgent();
+                map.invalidate();
+                closeOptionsMenu();
             }
-        });
-        popupMenu.show();
+        } else {
+            Toast.makeText(getApplicationContext(), "Debes primero marcar un origen", Toast.LENGTH_LONG).show();
+        }
 
-        return false;
+    return false;
     }
 
     @Override
@@ -470,11 +412,11 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
                     map.getOverlays().addAll(markerpoints);
                     waypoints.set(0, actualposPoint);
                     Routing();
+                    cancelBt.show();
                     map.getOverlays().add(0, mapEventsOverlay); }
                 else {
                     Toast.makeText(getApplicationContext(), "Favor de seleccionar un origen o escalas", Toast.LENGTH_LONG).show();
                 }
-
             case R.id.recenterButton:
                 IMapController mapController = map.getController();
                 mapController.setCenter(actualposPoint);
@@ -564,6 +506,9 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
     @Override
     public void onLocationChanged(Location location) {
 
+        userOrientation = Orientation.which_direction(mAzimuth);
+        bearingDirection = Orientation.which_direction((int)Math.round(bearing));
+
         mapEventsOverlay = new MapEventsOverlay(this);
         map.getOverlays().add(0, mapEventsOverlay);
 
@@ -587,8 +532,16 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
 
         if(!nodes.isEmpty()){
             checkingDistance();
-
         }
+
+//        if(actualposPoint.distanceToAsDouble(nearestNode) >= 30 && actualposPoint.distanceToAsDouble(nearestNode) < 50){
+//            returnDirection = Orientation.doubleOrientationDirection(userOrientation,bearingDirection);
+//            MyConexionBT.write(returnDirection);
+//        }
+//        else if(actualposPoint.distanceToAsDouble(nearestNode) >= 50){
+//            Rerouting();
+//        }
+
     }
 
     public void checkingDistance() {
@@ -613,6 +566,14 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
                 }
             }
         }
+    }
+
+    public void Rerouting(){
+        map.getOverlays().clear();
+        map.getOverlays().add(0, mapEventsOverlay);
+        map.getOverlays().add(1, actualposMarker);
+        nodes.clear();
+        Routing();
     }
 
     @Override
@@ -794,47 +755,6 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
         }
     }
 
-//    @Override
-//    protected void onSaveInstanceState(Bundle outState) {
-//        super.onSaveInstanceState(outState);
-//        Log.i("OSMMap", "onSaveInstanceState");
-//        if(destinationPt != null) {
-//            destinationLoc = destinationPt.getPosition();
-//            outState.putParcelable("destination",destinationLoc);
-//        }
-//        emptyRoad = road.mNodes.isEmpty();
-//        outState.putParcelableArrayList("waypoints",waypoints);
-//        outState.putParcelableArrayList("nodes",nodes);
-//        outState.putBoolean("route",emptyRoad);
-//    }
-
-//    @Override
-//    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-//        super.onRestoreInstanceState(savedInstanceState);
-//        Log.i("OSMMap", "onRestoreInstanceState");
-//        if (savedInstanceState != null && selectedCoords == null) {
-//            destinationLoc = savedInstanceState.getParcelable("destination");
-//            waypoints = savedInstanceState.getParcelableArrayList("waypoints");
-//            nodes = savedInstanceState.getParcelableArrayList("nodes");
-//            emptyRoad = savedInstanceState.getBoolean("emptyRoad");
-//
-//            destinationPt = new Marker(map);
-//            destinationPt.setPosition(destinationLoc);
-//            map.getOverlays().add(destinationPt);
-//            destinationPt.setTitle("Final Destination");
-//            infoWindow = new MyInfoWindow(R.layout.destination_popup, map);
-//            destinationPt.setInfoWindow(infoWindow);
-//            destinationPt.setIcon(getResources().getDrawable(R.drawable.destination_marker));
-//            markerpoints.add(destinationPt);
-//
-//            if(!emptyRoad){
-//                Routing();
-//                map.invalidate();
-//            }
-//        }
-//    }
-
-
     private class MyInfoWindow extends InfoWindow{
         public MyInfoWindow(int layoutResId, MapView mapView) {
             super(layoutResId, mapView);
@@ -913,4 +833,3 @@ public class OSMMap extends AppCompatActivity implements MapEventsReceiver, Loca
         }
     }
 }
-

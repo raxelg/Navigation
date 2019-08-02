@@ -18,18 +18,25 @@ public class DatabaseHelper extends SQLiteOpenHelper{
     public static final String DATABASE = "FAVORITES";
     public static final String TABLE_NAME = "LOCATIONS";
     public static final int DATABASE_VERSION = 1;
-    public static final String KEY_ID = "_id";
+    public static final String KEY_ID = "id";
     public static final String LABEL = "Label";
     public static final String ADDRESS = "Address";
     public static final String COORDINATES = "Coords";
 
     public DatabaseHelper(Context context) {
-        super(context, TABLE_NAME, null, 1);
+        super(context, TABLE_NAME, null, 2);
     }
+
+//    private static final String SCRIPT_CREATE_DATABASE =
+//            "CREATE TABLE " + TABLE_NAME + " ("
+//                    + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+//                    + LABEL + " TEXT, "
+//                    + ADDRESS + " TEXT, "
+//                    + COORDINATES + " TEXT);";
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String sql = "CREATE TABLE TABLE_NAME (KEY_ID INTEGER PRIMARY KEY AUTOINCREMENT, LABEL TEXT, ADDRESS TEXT, COORDINATES TEXT)";
+        String sql = "CREATE TABLE IF NOT EXISTS LOCATIONS (id INTEGER PRIMARY KEY AUTOINCREMENT, Label TEXT, Address TEXT, Coords TEXT)";
         SQLiteStatement stmt = db.compileStatement(sql);
         stmt.execute();
     }
@@ -43,7 +50,7 @@ public class DatabaseHelper extends SQLiteOpenHelper{
 
     public boolean addData(String label, String address, String coords) {
         SQLiteDatabase db = this.getWritableDatabase();
-        String query = "INSERT INTO LOCATIONS(LABEL,ADDRESS,COORDS) VALUES(?,?,?)";
+        String query = "INSERT INTO LOCATIONS(Label,Address,Coords) VALUES(?,?,?)";
         SQLiteStatement statement = db.compileStatement(query);
         statement.bindString(1,label);
         statement.bindString(2,address);
@@ -59,25 +66,24 @@ public class DatabaseHelper extends SQLiteOpenHelper{
 
     public Cursor getData(){
         SQLiteDatabase db = this.getWritableDatabase();
-        String query = "SELECT * FROM " + TABLE_NAME;
+        String query = "SELECT * FROM LOCATIONS";
         Cursor data = db.rawQuery(query, null);
         return data;
     }
 
     public Cursor getItemID(String label){
         SQLiteDatabase db = this.getWritableDatabase();
-        String query = "SELECT _id FROM LOCATIONS WHERE LABEL = ?";
+        String query = "SELECT id FROM LOCATIONS WHERE Label = ?";
         Cursor data = db.rawQuery(query, new String[] {label});
         return data;
     }
 
     public void updateRow(int id, String columnName, String newData){
         SQLiteDatabase db = this.getWritableDatabase();
-        String query = "UPDATE LOCATIONS SET " + columnName + "=? WHERE _id = ?";
+        String query = "UPDATE LOCATIONS SET " + columnName + "=? WHERE id = ?";
         SQLiteStatement statement = db.compileStatement(query);
         statement.bindString(1,newData);
         statement.bindLong(2,id);
-
         int numberOfRowsAffected = statement.executeUpdateDelete();
     }
 

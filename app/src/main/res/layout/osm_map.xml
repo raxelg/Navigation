@@ -50,7 +50,7 @@
             android:id="@+id/db_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="8dp"
             android:layout_marginEnd="28dp"
             android:backgroundTint="@color/colorAccent"
             android:scaleType="center"
@@ -91,6 +91,21 @@
             android:text="@string/button_text"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/cancel_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="28dp"
+            android:backgroundTint="@color/colorAccent"
+            android:scaleType="center"
+            android:tint="@color/colorPrimary"
+            android:tooltipText="Cancel Route"
+            android:visibility="invisible"
+            app:layout_constraintEnd_toEndOf="@+id/map"
+            app:layout_constraintTop_toBottomOf="@+id/db_button"
+            app:srcCompat="@drawable/cancel_route" />
 
         <!--<TextView-->
         <!--android:id="@+id/txt_azimuth"-->
