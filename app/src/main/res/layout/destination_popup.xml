@@ -12,18 +12,18 @@
         android:layout_marginTop="0dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Final Destination"
+        android:text="@string/final_destination_info_window_title"
         android:textColor="@color/colorPrimaryDark"/>
 
     <ImageButton
         android:id="@+id/add_location"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:layout_gravity="center_horizontal"
         android:backgroundTint="@color/colorAccent"
         android:clickable="true"
         android:foregroundGravity="center"
-        android:tooltipText="Add location to database"
+        android:contentDescription="@string/final_destination_add_tooltip"
         app:srcCompat="@drawable/add_location_icon" />
 
 </LinearLayout>

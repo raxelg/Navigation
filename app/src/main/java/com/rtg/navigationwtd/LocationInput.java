@@ -108,7 +108,7 @@ public class LocationInput extends AppCompatActivity {
                     address_input.setText("");
                     coords_input.setText("");
                 } else {
-                    ToastMessage.message(getApplicationContext(),"You must put something in the text field!");
+                    Message.message(getApplicationContext(),"Debe poner algo en los campos de texto");
                 }
 
             };
@@ -152,9 +152,9 @@ public class LocationInput extends AppCompatActivity {
     public void AddData(String label, String address, String coords) {
         boolean insertData = mDatabaseHelper.addData(label,address,coords);
         if (insertData) {
-            ToastMessage.message(getApplicationContext(),"Data Successfully Inserted!");
+            Message.message(getApplicationContext(),"Ubicación insertada con éxito en la base de datos");
         } else {
-            ToastMessage.message(getApplicationContext(),"Something went wrong");
+            Message.message(getApplicationContext(),"Algo salió mal al agregar la ubicación");
         }
     }
 }

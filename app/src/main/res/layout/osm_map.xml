@@ -22,32 +22,25 @@
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.815"></org.osmdroid.views.MapView>
-
-        <!--<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"-->
-            <!--android:id="@+id/scrollView"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="200dp"-->
-            <!--android:fillViewport="true"-->
-            <!--android:background="@color/colorPrimary"-->
-            <!--app:layout_constraintBottom_toBottomOf="parent"-->
-            <!--app:layout_constraintEnd_toEndOf="parent"-->
-            <!--app:layout_constraintStart_toStartOf="parent">-->
+            app:layout_constraintVertical_bias="0.0"></org.osmdroid.views.MapView>
 
             <FrameLayout
                 android:id="@+id/locations_fragment"
                 class="com.rtg.navigationwtd.LocationsMenuFragment"
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
+                android:contentDescription="@string/fragment_pane_title"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                tools:layout="@android:layout/simple_list_item_2"></FrameLayout>
+                tools:layout="@android:layout/simple_list_item_2"
 
-        <!--</ScrollView>-->
+                ></FrameLayout>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/db_button"
+            android:id="@+id/database"
+            android:minHeight="48dp"
+            android:minWidth="48dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -55,19 +48,21 @@
             android:backgroundTint="@color/colorAccent"
             android:scaleType="center"
             android:tint="@color/colorPrimary"
-            android:tooltipText="Favorites"
+            android:contentDescription="@string/map_database_bt_tooltip"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/recenterButton"
+            app:layout_constraintTop_toBottomOf="@+id/recenter"
             app:srcCompat="@drawable/data_icon" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/recenterButton"
+            android:id="@+id/recenter"
+            android:minHeight="48dp"
+            android:minWidth="48dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:layout_marginEnd="28dp"
             android:backgroundTint="@color/colorAccent"
-            android:tooltipText="Recenter"
+            android:contentDescription="@string/recenter_route_bt_tooltip"
             app:layout_constraintEnd_toEndOf="@+id/map"
             app:layout_constraintTop_toBottomOf="@+id/img_compass"
             app:srcCompat="@drawable/recenter_icon" />
@@ -79,6 +74,7 @@
             android:layout_marginTop="8dp"
             android:layout_marginEnd="16dp"
             android:contentDescription="@string/img_description"
+            android:importantForAccessibility="no"
             android:scaleType="fitXY"
             app:layout_constraintEnd_toEndOf="@+id/map"
             app:layout_constraintTop_toTopOf="parent"
@@ -86,14 +82,23 @@
 
         <Button
             android:id="@+id/bTRouting"
-            android:layout_width="231dp"
-            android:layout_height="77dp"
-            android:text="@string/button_text"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:minWidth="48dp"
+            android:minHeight="48dp"
+            android:text="@string/routing_button_text"
+            android:textSize="24sp"
+            app:layout_constraintLeft_toLeftOf="@+id/left_guideline"
+            app:layout_constraintRight_toRightOf="@+id/right_guideline"
+            app:layout_constraintBottom_toBottomOf="@+id/bottom_guideline"/>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/cancel_button"
+            android:id="@+id/cancel"
+            android:minHeight="48dp"
+            android:minWidth="48dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -101,26 +106,33 @@
             android:backgroundTint="@color/colorAccent"
             android:scaleType="center"
             android:tint="@color/colorPrimary"
-            android:tooltipText="Cancel Route"
+            android:contentDescription="@string/cancel_route_bt_tooltip"
             android:visibility="invisible"
             app:layout_constraintEnd_toEndOf="@+id/map"
-            app:layout_constraintTop_toBottomOf="@+id/db_button"
+            app:layout_constraintTop_toBottomOf="@+id/database"
             app:srcCompat="@drawable/cancel_route" />
 
-        <!--<TextView-->
-        <!--android:id="@+id/txt_azimuth"-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:layout_marginStart="8dp"-->
-        <!--android:layout_marginEnd="8dp"-->
-        <!--android:text="@string/direction"-->
-        <!--android:textColor="#000"-->
-        <!--android:textSize="40sp"-->
-        <!--android:textStyle="bold"-->
-        <!--app:layout_constraintBottom_toTopOf="@+id/map"-->
-        <!--app:layout_constraintEnd_toEndOf="parent"-->
-        <!--app:layout_constraintHorizontal_bias="0.4"-->
-        <!--app:layout_constraintStart_toEndOf="@+id/bTRouting" />-->
+        <android.support.constraint.Guideline
+            android:id="@+id/left_guideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.1" />
+
+        <android.support.constraint.Guideline
+            android:id="@+id/right_guideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.7" />
+
+        <android.support.constraint.Guideline
+            android:id="@+id/bottom_guideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.1" />
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

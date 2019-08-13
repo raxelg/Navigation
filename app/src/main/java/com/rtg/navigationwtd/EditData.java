@@ -35,8 +35,8 @@ public class EditData extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.edit_location);
-        saveBt = findViewById(R.id.save_button);
-        deleteBt = findViewById(R.id.delete_button);
+        saveBt = findViewById(R.id.save);
+        deleteBt = findViewById(R.id.delete);
         label_input = findViewById(R.id.label_input);
         address_input = findViewById(R.id.address_input);
         coords_input = findViewById(R.id.coords_input);
@@ -86,7 +86,7 @@ public class EditData extends AppCompatActivity {
                     Intent back = new Intent(EditData.this,Favorites.class);
                     startActivity(back);
                 } else {
-                    ToastMessage.message(getApplicationContext(),"You must put something in the text field(s)!");
+                    Message.message(getApplicationContext(),"Debe poner algo en los campos de texto");
                 }
 
             }

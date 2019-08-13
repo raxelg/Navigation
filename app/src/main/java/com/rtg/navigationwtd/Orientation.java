@@ -38,7 +38,7 @@ public class Orientation {
     }
 
     public static String doubleOrientationDirection(String userOrientation, String bearingDirection) {
-        HashMap<String, String> oppositeDirections = new HashMap<String, String>();
+        HashMap<String, String> oppositeDirections = new HashMap<String, String>(); //each cardinal direction points to it's opposite direction
         oppositeDirections.put("N", "S");
         oppositeDirections.put("S", "N");
         oppositeDirections.put("E", "W");
@@ -51,35 +51,44 @@ public class Orientation {
         String direction = "";
 
         if (userOrientation == bearingDirection) {
-            direction = userOrientation;
-        } else if (userOrientation == "N" || userOrientation == "E" || userOrientation == "S" || userOrientation == "W") {
-            if (bearingDirection == oppositeDirections.get(userOrientation)) {
-                direction = bearingDirection;
-            } else if (bearingDirection.contains(userOrientation)) {
-                direction = bearingDirection.replace(userOrientation, "");
-            } else if (bearingDirection.contains(oppositeDirections.get(userOrientation)) && bearingDirection.length() > 1) {
-                direction = bearingDirection;
+            direction = "N";
+        } else if (userOrientation == oppositeDirections.get(userOrientation)){
+            direction = "S";
+        } else if (userOrientation == "N" || userOrientation == "S"){
+            direction = bearingDirection;
+        } else if (userOrientation == "E") {
+            if (bearingDirection == "N") {
+                direction = "W";
+            } else if (bearingDirection == "NE") {
+                direction = "NW";
+            } else if (bearingDirection == "NW") {
+                direction = "SW";
             } else {
-                if (bearingDirection == "E" || bearingDirection == "W") {
-                    direction = userOrientation + bearingDirection;
-                }
-                if (bearingDirection == "N" || bearingDirection == "S") {
-                    direction = bearingDirection + userOrientation;
-                    }
-                }
-
-        } else if(userOrientation == "NW" || userOrientation == "SE" || userOrientation == "NE" || userOrientation == "SW") {
-                if (bearingDirection == oppositeDirections.get(userOrientation) || bearingDirection.charAt(0) == oppositeDirections.get(userOrientation).charAt(0) || bearingDirection.charAt(0) == oppositeDirections.get(userOrientation).charAt(1)) {
-                    direction = oppositeDirections.get(userOrientation);
-                } else if (userOrientation.charAt(0) == bearingDirection.charAt(0)) {
-                    direction = userOrientation.charAt(0) + oppositeDirections.get(userOrientation.charAt(1));
-                } else if (userOrientation.charAt(0) == bearingDirection.charAt(0) && userOrientation.charAt(1) == oppositeDirections.get(bearingDirection.charAt(1)).charAt(0)) {
-                    direction = oppositeDirections.get(userOrientation.charAt(1));
-                } else if (userOrientation.charAt(1) == bearingDirection.charAt(0)) {
-                    direction = oppositeDirections.get(userOrientation.charAt(0)) + userOrientation.charAt(1);
-                } else if (userOrientation.charAt(1) == bearingDirection.charAt(1) && userOrientation.charAt(0) == oppositeDirections.get(bearingDirection.charAt(0)).charAt(0)) {
-                    direction = oppositeDirections.get(userOrientation.charAt(0));
-                }
-        } return direction;
+                direction = oppositeDirections.get(doubleOrientationDirection(userOrientation, oppositeDirections.get(bearingDirection)));
+            }
+        } else if (userOrientation == "SW") {
+            if (bearingDirection == "N") {
+                direction = "SE";
+            } else if (bearingDirection == "E") {
+                direction = "SW";
+            } else if (bearingDirection == "NW") {
+                direction = "E";
+            } else {
+                direction = oppositeDirections.get(doubleOrientationDirection(userOrientation, oppositeDirections.get(bearingDirection)));
+            }
+        } else if (userOrientation == "NW") {
+            if (bearingDirection == "N") {
+                direction = "NE";
+            } else if (bearingDirection == "E") {
+                direction = "SE";
+            } else if (bearingDirection == "SW") {
+                direction = "W";
+            } else {
+                direction = oppositeDirections.get(doubleOrientationDirection(userOrientation, oppositeDirections.get(bearingDirection)));
+            }
+        } else {
+            direction = oppositeDirections.get(doubleOrientationDirection(oppositeDirections.get(userOrientation), bearingDirection));
+        }
+        return direction;
     }
 }

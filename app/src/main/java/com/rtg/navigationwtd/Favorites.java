@@ -41,8 +41,8 @@ public class Favorites extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.app_bar);
         setSupportActionBar(toolbar);
 
-        editBt = findViewById(R.id.edit_fab);
-        destinationBt = findViewById(R.id.destination_button);
+        editBt = findViewById(R.id.edit_location);
+        destinationBt = findViewById(R.id.destination);
 
         ExpandList.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
             @Override
@@ -83,20 +83,20 @@ public class Favorites extends AppCompatActivity {
                         });
 
                     } else {
-                        ToastMessage.message(getApplicationContext(), "No ID associated with name");
+//                        Message.message(getApplicationContext(), "No ID associated with name");
                     }
                 } else {
                     editBt.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            ToastMessage.message(getApplicationContext(),"Please select a location");
+                            Message.message(getApplicationContext(),"Por favor seleccione una ubicación");
                         }
                     });
 
                     destinationBt.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            ToastMessage.message(getApplicationContext(),"Please select a location");
+                            Message.message(getApplicationContext(),"Por favor seleccione una ubicación");
                         }
                     });
                 }
@@ -107,7 +107,7 @@ public class Favorites extends AppCompatActivity {
         editBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ToastMessage.message(getApplicationContext(),"Please select a location");
+                Message.message(getApplicationContext(),"Por favor seleccione una ubicación");
             }
         });
     }

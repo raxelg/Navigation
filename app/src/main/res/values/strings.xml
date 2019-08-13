@@ -1,14 +1,28 @@
 <resources>
     <string name="app_name">NavigationWTD</string>
-    <string name="button_text">Routing</string>
+    <string name="routing_button_text">Enrutamiento</string>
     <string name='direction'>0°</string>
     <string name='img_description'>compass</string>
     <string name="view_data">View Data</string>
-    <string name="map_menu">Map</string>
-    <string name="db_menu">Favorites</string>
-    <string name="add_menu">Add location</string>
-    <string name="location_bar_title">Add Location</string>
-    <string name="favorites_bar_title">Favorites</string>
-    <string name="edit_bar_title">Edit Location</string>
+    <string name="map_menu">Mapa</string>
+    <string name="db_menu">Favoritos</string>
+    <string name="add_menu">Añadir Ubicacion</string>
+    <string name="location_bar_title">Añadir Ubicacion</string>
+    <string name="favorites_bar_title">Favoritos</string>
+    <string name="edit_bar_title">Editar ubicación</string>
+    <string name="edit_location_button_tooltip">Editar ubicación</string>
+    <string name="final_destination_add_tooltip">Agregar ubicación a la base de datos</string>
+    <string name="final_destination_info_window_title">Destino final:</string>
+    <string name="location_address_input_hint">Dirección</string>
+    <string name="location_label_input_hint">Etiqueta</string>
+    <string name="location_coords_input_hint">Coordenadas</string>
+    <string name="fragment_pane_title">Ubicaciones guardadas</string>
+    <string name="cancel_route_bt_tooltip">Cancelar ruta</string>
+    <string name="recenter_route_bt_tooltip">Centrar el Mapa</string>
+    <string name="favorites_expand_list_title">Lista de ubicaciones favoritas</string>
+    <string name="place_location_bt_tooltip">Coloca la ubicación en el mapa</string>
+    <string name="delete_current_location_tooltip">Elimina la ubicación actual</string>
+    <string name="save_edited_location_tooltip">Termina la edición y guarda los cambios</string>
+    <string name="map_database_bt_tooltip">Base de datos de ubicaciones favoritas</string>
 
 </resources>
